@@ -16,16 +16,6 @@ public sealed class GameState
     public const int WordLength = 5;
     public const int MaxGuesses = 6;
 
-    private static readonly string[] Answers =
-    [
-        "APPLE", "BEACH", "BIRCH", "BRAIN", "BRAVE", "BRICK", "CHAIR", "CHARM",
-        "CLOUD", "CRANE", "DREAM", "EARTH", "FIELD", "FLAME", "FRESH", "GHOST",
-        "GRAPE", "GREEN", "HEART", "HOUSE", "LIGHT", "MANGO", "MOUSE", "NIGHT",
-        "OCEAN", "PAINT", "PEACH", "PLANT", "PRIDE", "QUIET", "RIVER", "SHARE",
-        "SHINE", "SLATE", "SMILE", "SOLAR", "SOUND", "SPARK", "STONE", "STORM",
-        "SUGAR", "TABLE", "TIGER", "TRACE", "TRAIN", "WATER", "WHALE", "WORLD"
-    ];
-
     private readonly List<Guess> guesses = [];
     private readonly Dictionary<char, LetterFeedback> usedLetters = [];
     private string answer;
@@ -85,6 +75,13 @@ public sealed class GameState
         {
             HasInputError = true;
             Message = "Type five letters before submitting.";
+            return;
+        }
+
+        if (!WordDictionary.Contains(CurrentGuess))
+        {
+            HasInputError = true;
+            Message = "Not in the English dictionary.";
             return;
         }
 
@@ -161,7 +158,7 @@ public sealed class GameState
         return feedback;
     }
 
-    private static string ChooseAnswer() => Answers[Random.Shared.Next(Answers.Length)];
+    private static string ChooseAnswer() => WordDictionary.Words[Random.Shared.Next(WordDictionary.Words.Count)];
 
     private static string NormalizeAnswer(string value)
     {
@@ -170,6 +167,11 @@ public sealed class GameState
             throw new ArgumentException("The answer must contain exactly five ASCII letters.", nameof(value));
         }
 
-        return value.ToUpperInvariant();
+        var normalized = value.ToUpperInvariant();
+        if (!WordDictionary.Contains(normalized))
+        {
+            throw new ArgumentException("The answer must be in the English dictionary.", nameof(value));
+        }
+        return normalized;
     }
 }

@@ -131,6 +131,7 @@ public class GameStateTests
     [InlineData("TOOLONG")]
     [InlineData("AB12E")]
     [InlineData("CAFÉX")]
+    [InlineData("ZZZZZ")]
     public void InvalidAnswersAreRejected(string answer)
     {
         Assert.Throws<ArgumentException>(() => new GameState(answer));
@@ -163,6 +164,64 @@ public class GameStateTests
 
         game.Restart();
         Assert.Empty(game.UsedLetters);
+    }
+
+    [Fact]
+    public void EmbeddedDictionaryContainsUniqueFiveLetterAsciiWords()
+    {
+        Assert.Equal(15921, WordDictionary.Words.Count);
+        Assert.Equal(WordDictionary.Words.Count, WordDictionary.Words.Distinct().Count());
+        Assert.All(WordDictionary.Words, word =>
+        {
+            Assert.Equal(5, word.Length);
+            Assert.All(word, letter => Assert.True(char.IsAsciiLetterUpper(letter)));
+            Assert.True(WordDictionary.Contains(word.ToLowerInvariant()));
+        });
+        Assert.True(WordDictionary.Contains("APPLE"));
+        Assert.False(WordDictionary.Contains("ZZZZZ"));
+        Assert.False(WordDictionary.Contains("APPLES"));
+    }
+
+    [Fact]
+    public void RandomAnswersAndRestartsUseTheAcceptedDictionary()
+    {
+        var game = new GameState();
+        var answers = new HashSet<string>();
+        for (var i = 0; i < 100; i++)
+        {
+            game.WinForTesting();
+            Assert.True(game.IsWon);
+            var word = Assert.Single(game.Guesses).Word;
+            Assert.True(WordDictionary.Contains(word));
+            answers.Add(word);
+            game.Restart();
+        }
+        Assert.True(answers.Count > 1);
+    }
+
+    [Fact]
+    public void UnknownWordsPreserveInputAndAttemptsAndEditingClearsTheError()
+    {
+        var game = new GameState("APPLE");
+        Type(game, "WORLD");
+        game.Submit();
+        Type(game, "zzzzz");
+        game.Submit();
+        Assert.True(game.HasInputError);
+        Assert.Equal("Not in the English dictionary.", game.Message);
+        Assert.Equal("ZZZZZ", game.CurrentGuess);
+        Assert.Single(game.Guesses);
+        Assert.False(game.IsFinished);
+        Assert.False(game.UsedLetters.ContainsKey('Z'));
+        game.Backspace();
+        Assert.False(game.HasInputError);
+        Assert.Equal("ZZZZ", game.CurrentGuess);
+        for (var i = 0; i < 4; i++) game.Backspace();
+        Type(game, "CRANE");
+        game.Submit();
+        Assert.False(game.HasInputError);
+        Assert.Equal(2, game.Guesses.Count);
+        Assert.Empty(game.CurrentGuess);
     }
 
     private static void Type(GameState game, string text)

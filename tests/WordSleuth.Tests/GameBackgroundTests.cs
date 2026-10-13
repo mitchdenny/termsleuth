@@ -12,7 +12,7 @@ public class GameBackgroundTests
     public async Task RemainingGuessesDriveRedIntensityAndTurbulenceAndRestartRestoresCoolColors()
     {
         var clock = new AnimationClock();
-        var game = new GameState("ZZZZZ");
+        var game = new GameState("ZEBRA");
         var screen = new GameScreen(game, clock);
         await using var terminal = Hex1bTerminal.CreateBuilder()
             .WithHeadless(new TerminalCapabilities { SupportsTrueColor = true })
@@ -38,8 +38,8 @@ public class GameBackgroundTests
                     coolMoved = EdgePixels(s);
                     return Motion(cool, coolMoved) > 0.1;
                 }, TimeSpan.FromSeconds(5))
-                .Type("abcde").Enter().Type("fghij").Enter().Type("klmno").Enter()
-                .Type("pqrst").Enter().Type("uvwxy").Enter()
+                .Type("crane").Enter().Type("split").Enter().Type("dough").Enter()
+                .Type("bumps").Enter().Type("vexed").Enter()
                 .WaitUntil(s =>
                 {
                     hot = EdgePixels(s);
@@ -57,8 +57,8 @@ public class GameBackgroundTests
                     hotMoved = EdgePixels(s);
                     return Motion(hot, hotMoved) > Motion(cool, coolMoved) * 1.5;
                 }, TimeSpan.FromSeconds(5))
-                .Type("abcde").Enter()
-                .WaitUntil(s => s.ContainsText("The word was ZZZZZ") && !s.ContainsText("remaining"),
+                .Type("crane").Enter()
+                .WaitUntil(s => s.ContainsText("The word was ZEBRA") && !s.ContainsText("remaining"),
                     TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.R, Hex1bModifiers.Control)
                 .WaitUntil(s => s.ContainsText("6 remaining")
@@ -151,7 +151,7 @@ public class GameBackgroundTests
                     return BlackMarginMatches(s) && s.GetCell(0, 0).Character == "▀";
                 }, TimeSpan.FromSeconds(5))
                 .Type("apple").Enter()
-                .WaitUntil(s => s.ContainsText("Solved in 1"), TimeSpan.FromSeconds(5))
+                .WaitUntil(s => s.ContainsText("PLAY AGAIN") && !s.ContainsText("Solved"), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.C, Hex1bModifiers.Control)
                 .Build().ApplyAsync(terminal, timeout.Token);
             await running.WaitAsync(timeout.Token);

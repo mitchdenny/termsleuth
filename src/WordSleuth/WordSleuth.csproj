@@ -9,6 +9,8 @@
 
   <ItemGroup>
     <PackageReference Include="Hex1b" Version="0.174.0" />
+    <InternalsVisibleTo Include="WordSleuth.Tests" />
+    <EmbeddedResource Include="Words/FiveLetterWords.txt" LogicalName="WordSleuth.FiveLetterWords.txt" />
   </ItemGroup>
 
 </Project>

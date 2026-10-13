@@ -22,11 +22,11 @@ public sealed class GameScreen(GameState game, TimeProvider? timeProvider = null
                 v.Padding(5, 5, 0, 0, GameFooter.Build(v, game.IsFinished, game.IsWon, game.UsedLetters, Restart))
                     .FixedHeight(GameFooter.Height),
                 v.Padding(5, 5, 0, 0, GuessStatus.Build(v,
-                    game.IsFinished || game.HasInputError
+                    game.IsFinished && !game.IsWon || game.HasInputError
                         ? game.Message : ""))
                     .FixedHeight(2)
             ]).FixedWidth(ContentWidth).FixedHeight(ContentHeight)).Fill(),
-            confetti.Build(z, game.IsWon, ContentHeight)
+            confetti.Build(z, game.IsWon)
         ]).Fill().InputBindings(bindings =>
     {
         foreach (var letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ")

@@ -9,11 +9,46 @@ namespace WordSleuth.Tests;
 
 public class GameScreenTests
 {
+    [Fact]
+    public async Task UnknownWordsShowAnErrorWithoutAdvancingTheRowAndCanBeEdited()
+    {
+        var game = new GameState("APPLE");
+        var screen = new GameScreen(game);
+        await using var terminal = Hex1bTerminal.CreateBuilder()
+            .WithHeadless(new TerminalCapabilities { SupportsTrueColor = true })
+            .WithDimensions(80, 30).WithHex1bApp(screen.Build).Build();
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        var running = terminal.RunAsync(timeout.Token);
+        try
+        {
+            await new Hex1bTerminalInputSequenceBuilder()
+                .WaitUntil(s => s.ContainsText("6 remaining"), TimeSpan.FromSeconds(5))
+                .Type("zzzzz").Enter()
+                .WaitUntil(s => s.ContainsText("Not in the English dictionary.")
+                    && s.ContainsText("6 remaining") && LetterRowIsVisible(s, "ZZZZZ"), TimeSpan.FromSeconds(5))
+                .Backspace()
+                .WaitUntil(s => !s.ContainsText("Not in the English dictionary.")
+                    && ActiveRowMatches(s, 0, 4), TimeSpan.FromSeconds(5))
+                .Backspace().Backspace().Backspace().Backspace()
+                .Type("world").Enter()
+                .WaitUntil(s => s.ContainsText("5 remaining")
+                    && LetterRowIsVisible(s, "WORLD") && !game.HasInputError, TimeSpan.FromSeconds(5))
+                .Key(Hex1bKey.C, Hex1bModifiers.Control).Build().ApplyAsync(terminal, timeout.Token);
+            await running.WaitAsync(timeout.Token);
+            Assert.Equal("WORLD", Assert.Single(game.Guesses).Word);
+        }
+        finally
+        {
+            await timeout.CancelAsync();
+            await running;
+        }
+    }
+
     [Theory]
     [InlineData(80, 60, "APPLE")]
     [InlineData(80, 30, "APPLE")]
-    [InlineData(80, 60, "MWXYZ")]
-    [InlineData(62, 30, "MWXYZ")]
+    [InlineData(80, 60, "MUMMY")]
+    [InlineData(62, 30, "MUMMY")]
     [InlineData(120, 40, "APPLE")]
     [InlineData(63, 31, "APPLE")]
     public async Task RealInputUpdatesTheRenderedBoardAndCanWinRestartAndQuit(int width, int height, string answer)
@@ -35,7 +70,7 @@ public class GameScreenTests
                 .Type(answer[..4].ToLowerInvariant() + "x").Backspace().Type(answer[4].ToString())
                 .WaitUntil(s => LetterRowIsVisible(s, answer), TimeSpan.FromSeconds(5))
                 .Enter()
-                .WaitUntil(s => s.ContainsText("Solved in 1") && RemainingPromptsMatch(s, null), TimeSpan.FromSeconds(5))
+                .WaitUntil(s => game.IsWon && s.ContainsText("PLAY AGAIN") && RemainingPromptsMatch(s, null), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.R, Hex1bModifiers.Control)
                 .WaitUntil(s => s.ContainsText("6 remaining"), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.C, Hex1bModifiers.Control)
@@ -112,10 +147,10 @@ public class GameScreenTests
     }
 
     [Fact]
-    public async Task TwentyFiveUsedLettersFitBelowTheGridBeforeTheFinalGuess()
+    public async Task UsedLettersFitBelowTheGridBeforeTheFinalGuess()
     {
-        var game = new GameState("ZZZZZ");
-        foreach (var word in new[] { "ABCDE", "FGHIJ", "KLMNO", "PQRST", "UVWXY" })
+        var game = new GameState("ZEBRA");
+        foreach (var word in new[] { "CRANE", "SPLIT", "DOUGH", "BUMPS", "VEXED" })
         {
             foreach (var letter in word)
             {
@@ -133,8 +168,7 @@ public class GameScreenTests
         try
         {
             await new Hex1bTerminalInputSequenceBuilder()
-                .WaitUntil(s => LettersMatch(s, "ABCDEFGHIJKLMNOPQRSTUVWXY".ToDictionary(
-                    letter => letter, _ => LetterFeedback.Absent))
+                .WaitUntil(s => LettersMatch(s, game.UsedLetters.ToDictionary())
                     && s.GetCell(15, 25).Character == "A" && s.GetCell(63, 26).Character == "Z", TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.C, Hex1bModifiers.Control).Build().ApplyAsync(terminal, timeout.Token);
             await running.WaitAsync(timeout.Token);
@@ -152,7 +186,7 @@ public class GameScreenTests
     [InlineData(62, 30)]
     public async Task ActiveTilesAndHalfBlockCursorFollowTypingSubmissionAndRestart(int width, int height)
     {
-        var game = new GameState("ZZZZZ");
+        var game = new GameState("ZEBRA");
         var screen = new GameScreen(game);
         await using var terminal = Hex1bTerminal.CreateBuilder()
             .WithHeadless(new TerminalCapabilities { SupportsTrueColor = true })
@@ -166,21 +200,21 @@ public class GameScreenTests
         {
             await new Hex1bTerminalInputSequenceBuilder()
                 .WaitUntil(s => ActiveRowMatches(s, 0, 0) && TileColorsMatch(s, 1, black), TimeSpan.FromSeconds(5))
-                .Type("ab")
-                .WaitUntil(s => LetterRowIsVisible(s, "AB") && ActiveRowMatches(s, 0, 2), TimeSpan.FromSeconds(5))
+                .Type("cr")
+                .WaitUntil(s => LetterRowIsVisible(s, "CR") && ActiveRowMatches(s, 0, 2), TimeSpan.FromSeconds(5))
                 .Backspace()
-                .WaitUntil(s => LetterRowIsVisible(s, "A") && ActiveRowMatches(s, 0, 1), TimeSpan.FromSeconds(5))
-                .Type("bcde")
-                .WaitUntil(s => LetterRowIsVisible(s, "ABCDE") && ActiveRowMatches(s, 0, null), TimeSpan.FromSeconds(5))
+                .WaitUntil(s => LetterRowIsVisible(s, "C") && ActiveRowMatches(s, 0, 1), TimeSpan.FromSeconds(5))
+                .Type("rane")
+                .WaitUntil(s => LetterRowIsVisible(s, "CRANE") && ActiveRowMatches(s, 0, null), TimeSpan.FromSeconds(5))
                 .Enter()
                 .WaitUntil(s => ActiveRowMatches(s, 1, 0), TimeSpan.FromSeconds(5))
-                .Type("fghij").Enter().Type("klmno").Enter().Type("pqrst").Enter().Type("uvwxy").Enter()
+                .Type("split").Enter().Type("dough").Enter().Type("bumps").Enter().Type("vexed").Enter()
                 .WaitUntil(s => ActiveRowMatches(s, 5, 0), TimeSpan.FromSeconds(5))
-                .Type("zzzzz")
-                .WaitUntil(s => LetterRowIsVisible(s, "ZZZZZ", 5) && ActiveRowMatches(s, 5, null)
+                .Type("zebra")
+                .WaitUntil(s => LetterRowIsVisible(s, "ZEBRA", 5) && ActiveRowMatches(s, 5, null)
                     && EnterButtonsMatch(s, 5), TimeSpan.FromSeconds(5))
                 .Enter()
-                .WaitUntil(s => s.ContainsText("Solved in 6") && TileColorsMatch(s, 5, green)
+                .WaitUntil(s => game.IsWon && s.ContainsText("PLAY AGAIN") && TileColorsMatch(s, 5, green)
                     && RemainingPromptsMatch(s, null), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.R, Hex1bModifiers.Control)
                 .WaitUntil(s => s.ContainsText("6 remaining") && ActiveRowMatches(s, 0, 0)
@@ -253,7 +287,7 @@ public class GameScreenTests
                 .Type("apple")
                 .WaitUntil(s => LetterRowIsVisible(s, "APPLE", 1) && EnterButtonsMatch(s, 1), TimeSpan.FromSeconds(5))
                 .Enter()
-                .WaitUntil(s => s.ContainsText("Solved in 2") && EnterButtonsMatch(s, null), TimeSpan.FromSeconds(5))
+                .WaitUntil(s => game.IsWon && s.ContainsText("PLAY AGAIN") && EnterButtonsMatch(s, null), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.R, Hex1bModifiers.Control)
                 .WaitUntil(s => s.ContainsText("6 remaining") && ActiveRowMatches(s, 0, 0)
                     && EnterButtonsMatch(s, null), TimeSpan.FromSeconds(5))
