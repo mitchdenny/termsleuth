@@ -28,8 +28,11 @@ dotnet run --project src/WordSleuth
 
 Type A-Z to fill the current row, Backspace to erase, and Enter to submit.
 Green `=` tiles are correct, yellow `~` tiles are in the wrong position,
-and gray `-` tiles are absent. Duplicate letters are scored only as many times
+and gray `-` tiles are absent. FIGlet letters and title markers stay white over
+the colored tile backgrounds. Duplicate letters are scored only as many times
 as they occur in the answer. Ctrl+R starts a new game; Ctrl+C quits.
+Used letters appear alphabetically below the grid after submission, colored
+by their best result so far. Starting a new game clears the list.
 Page Up / Page Down scroll the board in shorter terminals. Use at least 70
 columns; the input row and status remain below the scrollable board.
 

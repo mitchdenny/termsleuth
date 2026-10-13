@@ -27,6 +27,7 @@ public sealed class GameScreen(GameState game)
                 bindings.Key(Hex1bKey.PageDown).Global().Triggers(ScrollPanelWidget.PageDownAction);
             })
             .FillHeight(),
+        BuildUsedLetters(v),
         v.Text($"Guess {Math.Min(game.Guesses.Count + 1, GameState.MaxGuesses)}/{GameState.MaxGuesses}: [{game.CurrentGuess.PadRight(GameState.WordLength, '_')}]"),
         v.Text(game.Message),
         v.Text("A-Z: type | Backspace: erase | Enter: submit"),
@@ -56,26 +57,60 @@ public sealed class GameScreen(GameState game)
             {
                 var letter = column < word.Length ? word[column].ToString() : " ";
                 var feedback = submitted?.Feedback[column];
-                var marker = feedback switch
-                {
-                    LetterFeedback.Correct => "=",
-                    LetterFeedback.Present => "~",
-                    LetterFeedback.Absent => "-",
-                    _ => column < word.Length ? letter : "_"
-                };
-                var color = feedback switch
-                {
-                    LetterFeedback.Correct => Hex1bColor.Green,
-                    LetterFeedback.Present => Hex1bColor.Yellow,
-                    LetterFeedback.Absent => Hex1bColor.Gray,
-                    _ => Hex1bColor.White
-                };
-
-                return h.ThemePanel(
-                    theme => theme.Set(GlobalTheme.ForegroundColor, color),
+                var marker = feedback.HasValue
+                    ? FeedbackMarker(feedback.Value)
+                    : column < word.Length ? letter : "_";
+                return ColorTile(h,
                     h.Border(h.FigletText(letter).Font(Font)).Title(marker)
-                        .FixedWidth(TileWidth));
+                        .FixedWidth(TileWidth),
+                    feedback);
             })
             .ToArray()).FixedHeight(RowHeight);
+    }
+
+    private Hex1bWidget BuildUsedLetters(WidgetContext<VStackWidget> context)
+    {
+        var letters = game.UsedLetters.OrderBy(letter => letter.Key).ToArray();
+        return context.VStack(v =>
+        [
+            v.Text(letters.Length == 0 ? "Used letters: none yet" : "Used letters"),
+            .. letters.Chunk(13).Select(chunk => v.HStack(h => chunk
+                .Select(letter => ColorTile(h, h.Text($" {letter.Key}{FeedbackMarker(letter.Value)} ").FixedWidth(4), letter.Value))
+                .ToArray()).FixedHeight(1))
+        ]);
+    }
+
+    private static string FeedbackMarker(LetterFeedback feedback) => feedback switch
+    {
+        LetterFeedback.Correct => "=",
+        LetterFeedback.Present => "~",
+        _ => "-"
+    };
+
+    private static Hex1bWidget ColorTile<T>(WidgetContext<T> context, Hex1bWidget child, LetterFeedback? feedback)
+        where T : Hex1bWidget
+    {
+        var background = feedback switch
+        {
+            LetterFeedback.Correct => Hex1bColor.FromRgb(83, 141, 78),
+            LetterFeedback.Present => Hex1bColor.FromRgb(181, 159, 59),
+            LetterFeedback.Absent => Hex1bColor.FromRgb(58, 58, 60),
+            _ => Hex1bColor.Default
+        };
+
+        return context.EffectPanel(child, surface =>
+        {
+            for (var y = 0; y < surface.Height; y++)
+            {
+                for (var x = 0; x < surface.Width; x++)
+                {
+                    surface[x, y] = surface[x, y] with
+                    {
+                        Foreground = Hex1bColor.White,
+                        Background = background
+                    };
+                }
+            }
+        });
     }
 }

@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+
 namespace WordSleuth;
 
 public enum LetterFeedback
@@ -25,15 +27,18 @@ public sealed class GameState
     ];
 
     private readonly List<Guess> guesses = [];
+    private readonly Dictionary<char, LetterFeedback> usedLetters = [];
     private string answer;
 
     public GameState(string? answer = null)
     {
         this.answer = answer is null ? ChooseAnswer() : NormalizeAnswer(answer);
         Guesses = guesses.AsReadOnly();
+        UsedLetters = new ReadOnlyDictionary<char, LetterFeedback>(usedLetters);
     }
 
     public IReadOnlyList<Guess> Guesses { get; }
+    public IReadOnlyDictionary<char, LetterFeedback> UsedLetters { get; }
     public string CurrentGuess { get; private set; } = "";
     public string Message { get; private set; } = "Find the five-letter word in six guesses.";
     public bool IsWon { get; private set; }
@@ -80,6 +85,15 @@ public sealed class GameState
 
         var feedback = Score(CurrentGuess);
         guesses.Add(new Guess(CurrentGuess, Array.AsReadOnly(feedback)));
+        for (var i = 0; i < WordLength; i++)
+        {
+            var letter = CurrentGuess[i];
+            if (!usedLetters.TryGetValue(letter, out var previous) || feedback[i] > previous)
+            {
+                usedLetters[letter] = feedback[i];
+            }
+        }
+
         IsWon = CurrentGuess == answer;
         CurrentGuess = "";
         Message = IsWon
@@ -93,6 +107,7 @@ public sealed class GameState
     {
         answer = ChooseAnswer();
         guesses.Clear();
+        usedLetters.Clear();
         CurrentGuess = "";
         IsWon = false;
         Message = "Find the five-letter word in six guesses.";

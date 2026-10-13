@@ -115,6 +115,35 @@ public class GameStateTests
         Assert.Throws<ArgumentException>(() => new GameState(answer));
     }
 
+    [Fact]
+    public void UsedLettersTrackSubmittedGuessesAndKeepTheirBestFeedback()
+    {
+        var game = new GameState("APPLE");
+        Type(game, "ALLEY");
+        Assert.Empty(game.UsedLetters);
+        game.Submit();
+        Assert.Equal(4, game.UsedLetters.Count);
+        Assert.Equal(LetterFeedback.Correct, game.UsedLetters['A']);
+        Assert.Equal(LetterFeedback.Present, game.UsedLetters['L']);
+        Assert.Equal(LetterFeedback.Present, game.UsedLetters['E']);
+        Assert.Equal(LetterFeedback.Absent, game.UsedLetters['Y']);
+
+        Type(game, "PAPAL");
+        game.Submit();
+        Assert.Equal(5, game.UsedLetters.Count);
+        Assert.Equal(LetterFeedback.Correct, game.UsedLetters['A']);
+        Assert.Equal(LetterFeedback.Correct, game.UsedLetters['P']);
+
+        Type(game, "APPLE");
+        game.Submit();
+        Assert.Equal(LetterFeedback.Correct, game.UsedLetters['L']);
+        Assert.Equal(LetterFeedback.Correct, game.UsedLetters['E']);
+        Assert.Equal(LetterFeedback.Absent, game.UsedLetters['Y']);
+
+        game.Restart();
+        Assert.Empty(game.UsedLetters);
+    }
+
     private static void Type(GameState game, string text)
     {
         foreach (var letter in text)
