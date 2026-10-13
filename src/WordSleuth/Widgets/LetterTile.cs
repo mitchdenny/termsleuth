@@ -5,17 +5,14 @@ namespace WordSleuth;
 
 public static class LetterTile
 {
-    private static readonly FigletFont Font = FigletFonts.Small;
-    public static int Height => Font.Height + 2;
-    private const int Width = 13;
+    public const int Height = 3;
+    public const int Width = 5;
 
     public static Hex1bWidget Build(WidgetContext<HStackWidget> context, char? letter, LetterFeedback? feedback)
     {
-        var marker = feedback.HasValue ? TileStyle.Marker(feedback.Value) : letter?.ToString() ?? "_";
-        var tile = context.Border(context.FigletText(letter?.ToString() ?? " ").Font(Font))
-            .Title(marker).FixedWidth(Width);
-
-        // The row sets the height so the border still measures its FIGlet child.
+        var text = letter.HasValue ? char.ToUpperInvariant(letter.Value).ToString() : " ";
+        var tile = context.Padding(2, 2, 1, 1, context.Text(text))
+            .FixedWidth(Width).FixedHeight(Height);
         return TileStyle.Build(context, tile, feedback);
     }
 }

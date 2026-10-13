@@ -6,14 +6,14 @@ namespace WordSleuth;
 
 public sealed class GameScreen(GameState game)
 {
-    public Hex1bWidget Build(RootContext context) => context.VStack(v =>
+    public Hex1bWidget Build(RootContext context) => context.Align(Alignment.Center, context.VStack(v =>
     [
-        GameHeader.Build(v),
-        WordBoard.Build(v, game.Guesses, game.CurrentGuess),
+        v.Align(Alignment.Center, WordBoard.Build(v, game.Guesses, game.CurrentGuess))
+            .FixedHeight(GameState.MaxGuesses * LetterTile.Height),
         AlphabetGrid.Build(v, game.UsedLetters),
-        GuessStatus.Build(v, game.Guesses.Count, game.CurrentGuess, game.Message),
-        GameHelp.Build(v)
-    ]).InputBindings(bindings =>
+        GuessStatus.Build(v, game.Guesses.Count, game.CurrentGuess, game.Message)
+    ]).FixedWidth(52).FixedHeight(GameState.MaxGuesses * LetterTile.Height + 4))
+        .Fill().InputBindings(bindings =>
     {
         foreach (var letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
         {

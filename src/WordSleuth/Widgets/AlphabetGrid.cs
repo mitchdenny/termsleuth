@@ -9,7 +9,6 @@ public static class AlphabetGrid
         IReadOnlyDictionary<char, LetterFeedback> usedLetters) =>
         context.VStack(v =>
         [
-            v.Text("Letters (blue: unused)"),
             .. "ABCDEFGHIJKLMNOPQRSTUVWXYZ".Chunk(13).Select(letters => AlphabetRow.Build(v, letters, usedLetters))
         ]);
 }

@@ -13,6 +13,9 @@ public class GameScreenTests
     [InlineData(80, 60, "APPLE")]
     [InlineData(80, 24, "APPLE")]
     [InlineData(80, 60, "MWXYZ")]
+    [InlineData(52, 22, "MWXYZ")]
+    [InlineData(120, 40, "APPLE")]
+    [InlineData(53, 23, "APPLE")]
     public async Task RealInputUpdatesTheRenderedBoardAndCanWinRestartAndQuit(int width, int height, string answer)
     {
         var game = new GameState(answer);
@@ -28,10 +31,10 @@ public class GameScreenTests
         try
         {
             await new Hex1bTerminalInputSequenceBuilder()
-                .WaitUntil(s => s.ContainsText("TermSleuth"), TimeSpan.FromSeconds(5))
+                .WaitUntil(s => s.ContainsText("[_____]"), TimeSpan.FromSeconds(5))
                 .Type(answer[..4].ToLowerInvariant() + "x").Backspace().Type(answer[4].ToString())
                 .WaitUntil(s => s.ContainsText($"[{answer}]"), TimeSpan.FromSeconds(5))
-                .WaitUntil(s => FigletRowIsVisible(s, answer), TimeSpan.FromSeconds(5))
+                .WaitUntil(s => LetterRowIsVisible(s, answer), TimeSpan.FromSeconds(5))
                 .Enter()
                 .WaitUntil(s => s.ContainsText("Solved in 1"), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.R, Hex1bModifiers.Control)
@@ -78,12 +81,12 @@ public class GameScreenTests
         try
         {
             await new Hex1bTerminalInputSequenceBuilder()
-                .WaitUntil(s => s.ContainsText("TermSleuth") && LettersMatch(s, []), TimeSpan.FromSeconds(5))
+                .WaitUntil(s => s.ContainsText("[_____]") && LettersMatch(s, []), TimeSpan.FromSeconds(5))
                 .Type("alley")
-                .WaitUntil(s => FigletRowIsVisible(s, "ALLEY") && TileColorsMatch(s, 0, pending)
+                .WaitUntil(s => LetterRowIsVisible(s, "ALLEY") && TileColorsMatch(s, 0, pending)
                     && LettersMatch(s, []), TimeSpan.FromSeconds(5))
                 .Enter()
-                .WaitUntil(s => s.ContainsText("5 guesses left.") && FigletRowIsVisible(s, "ALLEY")
+                .WaitUntil(s => s.ContainsText("5 guesses left.") && LetterRowIsVisible(s, "ALLEY")
                     && TileColorsMatch(s, 0, scored) && TileColorsMatch(s, 1, pending)
                     && LettersMatch(s, new Dictionary<char, (string, Hex1bColor?)>
                     {
@@ -131,7 +134,7 @@ public class GameScreenTests
             await new Hex1bTerminalInputSequenceBuilder()
                 .WaitUntil(s => s.ContainsText(" A-  B-  C-  D-  E-  F-  G-  H-  I-  J-  K-  L-  M- ")
                     && s.ContainsText(" N-  O-  P-  Q-  R-  S-  T-  U-  V-  W-  X-  Y-  Z= ")
-                    && s.GetCell(1, 18).Character == "A" && s.GetCell(49, 19).Character == "Z", TimeSpan.FromSeconds(5))
+                    && s.GetCell(15, 19).Character == "A" && s.GetCell(63, 20).Character == "Z", TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.C, Hex1bModifiers.Control).Build().ApplyAsync(terminal, timeout.Token);
             await running.WaitAsync(timeout.Token);
         }
@@ -144,11 +147,6 @@ public class GameScreenTests
 
     private static bool LettersMatch(Hex1bTerminalSnapshot snapshot, Dictionary<char, (string Marker, Hex1bColor? Background)> usedLetters)
     {
-        if (!snapshot.ContainsText("Letters (blue: unused)"))
-        {
-            return false;
-        }
-
         for (var index = 0; index < 26; index++)
         {
             var letter = (char)('A' + index);
@@ -156,10 +154,10 @@ public class GameScreenTests
                 ? result
                 : (".", Hex1bColor.FromRgb(45, 70, 95));
             var expected = $" {letter}{marker} ";
-            var y = snapshot.Height - 6 + index / 13;
+            var y = (snapshot.Height - 22) / 2 + 18 + index / 13;
             for (var offset = 0; offset < 4; offset++)
             {
-                var cell = snapshot.GetCell(index % 13 * 4 + offset, y);
+                var cell = snapshot.GetCell((snapshot.Width - 52) / 2 + index % 13 * 4 + offset, y);
                 if (cell.Character != expected[offset].ToString()
                     || !Nullable.Equals<Hex1bColor>(cell.Foreground, Hex1bColor.White)
                     || !Nullable.Equals(cell.Background, background))
@@ -176,9 +174,11 @@ public class GameScreenTests
     {
         for (var column = 0; column < backgrounds.Length; column++)
         {
-            for (var y = 2 + row * 7; y < 2 + (row + 1) * 7; y++)
+            var top = (snapshot.Height - 22) / 2 + row * 3;
+            var left = (snapshot.Width - 52) / 2 + 13 + column * 5;
+            for (var y = top; y < top + 3; y++)
             {
-                for (var x = column * 13; x < (column + 1) * 13; x++)
+                for (var x = left; x < left + 5; x++)
                 {
                     var cell = snapshot.GetCell(x, y);
                     if (!Nullable.Equals<Hex1bColor>(cell.Foreground, Hex1bColor.White)
@@ -193,31 +193,24 @@ public class GameScreenTests
         return true;
     }
 
-    [Fact]
-    public void EveryLetterFitsInsideItsTile()
+    private static bool LetterRowIsVisible(Hex1bTerminalSnapshot snapshot, string word)
     {
-        foreach (var letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        if (snapshot.ContainsText("TermSleuth") || snapshot.ContainsText("A-Z: type")
+            || snapshot.ContainsText("PgUp/PgDn"))
         {
-            Assert.True(FigletFonts.Small.TryGetGlyph(letter, out var glyph));
-            Assert.True(glyph.Width <= 11, $"{letter} is {glyph.Width} columns wide.");
+            return false;
         }
-    }
 
-    private static bool FigletRowIsVisible(Hex1bTerminalSnapshot snapshot, string word)
-    {
         for (var column = 0; column < word.Length; column++)
         {
-            if (!FigletFonts.Small.TryGetGlyph(word[column], out var glyph))
+            for (var y = 0; y < 3; y++)
             {
-                return false;
-            }
-
-            for (var y = 0; y < glyph.Height; y++)
-            {
-                var row = glyph.Rows[y].Replace(FigletFonts.Small.Hardblank, ' ');
-                for (var x = 0; x < row.Length; x++)
+                for (var x = 0; x < 5; x++)
                 {
-                    if (snapshot.GetCell(column * 13 + 1 + x, 3 + y).Character != row[x].ToString())
+                    var expected = x == 2 && y == 1 ? word[column].ToString() : " ";
+                    var left = (snapshot.Width - 52) / 2 + 13 + column * 5;
+                    var top = (snapshot.Height - 22) / 2;
+                    if (snapshot.GetCell(left + x, top + y).Character != expected)
                     {
                         return false;
                     }
