@@ -7,7 +7,7 @@ namespace WordSleuth;
 
 public static class RemainingGuesses
 {
-    public const int Width = 13;
+    public const int Width = 14;
     private static readonly Hex1bColor Blue = Hex1bColor.FromRgb(35, 77, 125);
 
     public static Hex1bWidget Build(WidgetContext<HStackWidget> context, int? remaining)
@@ -23,7 +23,7 @@ public static class RemainingGuesses
 
     private static void Draw(Surface surface, int remaining)
     {
-        var label = $"{remaining} remaining";
+        var label = $"{remaining}  remaining";
         for (var y = 0; y < LetterTile.Height; y++)
         {
             for (var x = 0; x < Width; x++)

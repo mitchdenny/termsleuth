@@ -53,7 +53,7 @@ tiles: unused letters are blue-gray, correct letters green, and misplaced
 letters yellow. Letters ruled out by submitted guesses are strongly faded.
 Submitted letters use their best result so far.
 Starting a new game resets all letters to unused.
-Use at least 58 columns and 29 rows to fit the board, alphabet, and status.
+Use at least 60 columns and 29 rows to fit the board, alphabet, and status.
 
 This initial version chooses randomly from a small built-in answer list and
 accepts any five ASCII letters as a guess; it does not yet enforce a dictionary

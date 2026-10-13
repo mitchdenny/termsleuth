@@ -22,7 +22,8 @@ public static class EnterButton
             return context.Text("").FixedWidth(Width).FixedHeight(LetterTile.Height);
         }
 
-        return context.Interactable(button => button.Surface(layers => [layers.Layer(Draw)]))
+        return context.Interactable(button => button.Surface(layers => [layers.Layer(Draw)])
+                .FixedWidth(Width).FixedHeight(LetterTile.Height))
             .OnClick(_ => submit()).FixedWidth(Width).FixedHeight(LetterTile.Height);
     }
 

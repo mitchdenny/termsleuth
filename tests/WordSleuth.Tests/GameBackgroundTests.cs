@@ -26,7 +26,7 @@ public class GameBackgroundTests
             await new Hex1bTerminalInputSequenceBuilder()
                 .WaitUntil(s =>
                 {
-                    if (!s.ContainsText("6 remaining")) return false;
+                    if (!s.ContainsText("6  remaining")) return false;
                     cool = EdgePixels(s);
                     return true;
                 }, TimeSpan.FromSeconds(5)).Build().ApplyAsync(terminal, timeout.Token);
@@ -43,7 +43,7 @@ public class GameBackgroundTests
                 .WaitUntil(s =>
                 {
                     hot = EdgePixels(s);
-                    return s.ContainsText("1 remaining") && hot.Any(p => p.Upper?.R > 60);
+                    return s.ContainsText("1  remaining") && hot.Any(p => p.Upper?.R > 60);
                 }, TimeSpan.FromSeconds(5)).Build().ApplyAsync(terminal, timeout.Token);
 
             Assert.True(hot.Average(p => p.Upper!.Value.R) > coolMoved.Average(p => p.Upper!.Value.R) * 2);
@@ -61,15 +61,15 @@ public class GameBackgroundTests
                 .WaitUntil(s => s.ContainsText("The word was ZZZZZ") && !s.ContainsText("remaining"),
                     TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.R, Hex1bModifiers.Control)
-                .WaitUntil(s => s.ContainsText("6 remaining")
+                .WaitUntil(s => s.ContainsText("6  remaining")
                     && EdgePixels(s).All(p => p.Upper!.Value.R <= 24 && p.Upper.Value.G <= 44
                         && p.Upper.Value.B >= p.Upper.Value.G), TimeSpan.FromSeconds(5))
                 .Enter()
                 .WaitUntil(s => s.ContainsText("Type five letters before submitting.")
-                    && s.ContainsText("6 remaining"), TimeSpan.FromSeconds(5))
+                    && s.ContainsText("6  remaining"), TimeSpan.FromSeconds(5))
                 .Type("a")
                 .WaitUntil(s => !s.ContainsText("Type five letters before submitting.")
-                    && s.ContainsText("6 remaining"), TimeSpan.FromSeconds(5))
+                    && s.ContainsText("6  remaining"), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.C, Hex1bModifiers.Control).Build().ApplyAsync(terminal, timeout.Token);
             await running.WaitAsync(timeout.Token);
         }
@@ -108,7 +108,7 @@ public class GameBackgroundTests
             await new Hex1bTerminalInputSequenceBuilder()
                 .WaitUntil(s =>
                 {
-                    if (!s.ContainsText("6 remaining") || s.GetCell(0, 0).Character != "▀")
+                    if (!s.ContainsText("6  remaining") || s.GetCell(0, 0).Character != "▀")
                     {
                         return false;
                     }
@@ -136,7 +136,7 @@ public class GameBackgroundTests
                 .WaitUntil(s =>
                 {
                     AssertBlackMargin(s);
-                    return s.ContainsText("6 remaining");
+                    return s.ContainsText("6  remaining");
                 }, TimeSpan.FromSeconds(5))
                 .Build().ApplyAsync(terminal, timeout.Token);
 
@@ -144,7 +144,7 @@ public class GameBackgroundTests
             await new Hex1bTerminalInputSequenceBuilder()
                 .WaitUntil(s =>
                 {
-                    if (s.Width != width + 12 || s.Height != height + 4 || !s.ContainsText("6 remaining"))
+                    if (s.Width != width + 12 || s.Height != height + 4 || !s.ContainsText("6  remaining"))
                     {
                         return false;
                     }
@@ -165,7 +165,7 @@ public class GameBackgroundTests
 
     private static (Hex1bColor? Upper, Hex1bColor? Lower)[] EdgePixels(Hex1bTerminalSnapshot snapshot) =>
         Enumerable.Range(0, snapshot.Width)
-            .Where(x => x < (snapshot.Width - 58) / 2 || x >= (snapshot.Width - 58) / 2 + 58)
+            .Where(x => x < (snapshot.Width - 60) / 2 || x >= (snapshot.Width - 60) / 2 + 60)
             .Select(x => snapshot.GetCell(x, 0))
             .Concat(Enumerable.Range(0, snapshot.Height).Select(y => snapshot.GetCell(0, y)))
             .Select(cell => (cell.Foreground, cell.Background)).ToArray();
@@ -183,7 +183,7 @@ public class GameBackgroundTests
 
     private static bool BlackMarginMatches(Hex1bTerminalSnapshot snapshot)
     {
-        var left = (snapshot.Width - 58) / 2;
+        var left = (snapshot.Width - 60) / 2;
         var top = (snapshot.Height - 29) / 2;
         for (var y = top; y < top + 29; y++)
         {

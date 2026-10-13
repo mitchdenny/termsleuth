@@ -18,8 +18,8 @@ public sealed class GameScreen(GameState game, TimeProvider? timeProvider = null
                 v.Align(Alignment.Center, WordBoard.Build(v, game.Guesses, game.CurrentGuess, game.IsFinished, game.Submit))
                     .FixedHeight(WordBoard.Height),
                 v.Text("").FixedHeight(1),
-                v.Padding(3, 3, 0, 0, AlphabetGrid.Build(v, game.UsedLetters)).FixedHeight(2),
-                v.Padding(3, 3, 0, 0, GuessStatus.Build(v,
+                v.Padding(4, 4, 0, 0, AlphabetGrid.Build(v, game.UsedLetters)).FixedHeight(2),
+                v.Padding(4, 4, 0, 0, GuessStatus.Build(v,
                     game.IsFinished || game.HasInputError
                         ? game.Message : ""))
                     .FixedHeight(2)

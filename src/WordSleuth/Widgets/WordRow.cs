@@ -20,7 +20,8 @@ public static class WordRow
                 .. Enumerable.Range(0, GameState.WordLength)
                     .Select(column => h.Padding(0, column < GameState.WordLength - 1 ? 1 : 0, 0, 0,
                         LetterTile.Build(h, column < word.Length ? word[column] : null, feedback?[column], isActive))),
-                h.Padding(1, 0, 0, 0, EnterButton.Build(h, isActive && word.Length == GameState.WordLength, submit))
+                h.Padding(1, SideWidth - EnterButton.Width - 1, 0, 0,
+                    EnterButton.Build(h, isActive && word.Length == GameState.WordLength, submit))
                     .FixedWidth(SideWidth)
             ]).FixedHeight(LetterTile.Height),
             v.Padding(SideWidth, SideWidth, 0, 0,
