@@ -31,13 +31,13 @@ public class GameScreenTests
         try
         {
             await new Hex1bTerminalInputSequenceBuilder()
-                .WaitUntil(s => s.ContainsText("6  remaining"), TimeSpan.FromSeconds(5))
+                .WaitUntil(s => s.ContainsText("6 remaining"), TimeSpan.FromSeconds(5))
                 .Type(answer[..4].ToLowerInvariant() + "x").Backspace().Type(answer[4].ToString())
                 .WaitUntil(s => LetterRowIsVisible(s, answer), TimeSpan.FromSeconds(5))
                 .Enter()
                 .WaitUntil(s => s.ContainsText("Solved in 1") && BoardGapsMatch(s, null, null), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.R, Hex1bModifiers.Control)
-                .WaitUntil(s => s.ContainsText("6  remaining"), TimeSpan.FromSeconds(5))
+                .WaitUntil(s => s.ContainsText("6 remaining"), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.C, Hex1bModifiers.Control)
                 .Build()
                 .ApplyAsync(terminal, timeout.Token);
@@ -81,12 +81,12 @@ public class GameScreenTests
         try
         {
             await new Hex1bTerminalInputSequenceBuilder()
-                .WaitUntil(s => s.ContainsText("6  remaining") && LettersMatch(s, []), TimeSpan.FromSeconds(5))
+                .WaitUntil(s => s.ContainsText("6 remaining") && LettersMatch(s, []), TimeSpan.FromSeconds(5))
                 .Type("alley")
                 .WaitUntil(s => LetterRowIsVisible(s, "ALLEY") && TileColorsMatch(s, 0, pending)
                     && LettersMatch(s, []), TimeSpan.FromSeconds(5))
                 .Enter()
-                .WaitUntil(s => s.ContainsText("5  remaining") && LetterRowIsVisible(s, "ALLEY") && BoardGapsMatch(s, 1, 0)
+                .WaitUntil(s => s.ContainsText("5 remaining") && LetterRowIsVisible(s, "ALLEY") && BoardGapsMatch(s, 1, 0)
                     && TileColorsMatch(s, 0, scored) && TileColorsMatch(s, 1, pending)
                     && LettersMatch(s, new Dictionary<char, LetterFeedback>
                     {
@@ -96,7 +96,7 @@ public class GameScreenTests
                         ['Y'] = LetterFeedback.Absent
                     }), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.R, Hex1bModifiers.Control)
-                .WaitUntil(s => s.ContainsText("6  remaining") && LettersMatch(s, [])
+                .WaitUntil(s => s.ContainsText("6 remaining") && LettersMatch(s, [])
                     && TileColorsMatch(s, 0, pending), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.C, Hex1bModifiers.Control)
                 .Build()
@@ -183,7 +183,7 @@ public class GameScreenTests
                 .WaitUntil(s => s.ContainsText("Solved in 6") && TileColorsMatch(s, 5, green)
                     && BoardGapsMatch(s, null, null), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.R, Hex1bModifiers.Control)
-                .WaitUntil(s => s.ContainsText("6  remaining") && ActiveRowMatches(s, 0, 0)
+                .WaitUntil(s => s.ContainsText("6 remaining") && ActiveRowMatches(s, 0, 0)
                     && TileColorsMatch(s, 1, black), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.C, Hex1bModifiers.Control)
                 .Build().ApplyAsync(terminal, timeout.Token);
@@ -232,7 +232,7 @@ public class GameScreenTests
                 .WaitUntil(s => LetterRowIsVisible(s, "ALLE") && ActiveRowMatches(s, 0, 4)
                     && EnterButtonsMatch(s, null), TimeSpan.FromSeconds(5))
                 .ClickAt(buttonX + 4, buttonY, MouseButton.Left)
-                .WaitUntil(s => s.ContainsText("6  remaining")
+                .WaitUntil(s => s.ContainsText("6 remaining")
                     && EnterButtonsMatch(s, null), TimeSpan.FromSeconds(5))
                 .Type("y")
                 .WaitUntil(s => LetterRowIsVisible(s, "ALLEY") && EnterButtonsMatch(s, 0), TimeSpan.FromSeconds(5))
@@ -248,14 +248,14 @@ public class GameScreenTests
                 submit.Enter();
             }
             await submit
-                .WaitUntil(s => s.ContainsText("5  remaining") && LetterRowIsVisible(s, "ALLEY")
+                .WaitUntil(s => s.ContainsText("5 remaining") && LetterRowIsVisible(s, "ALLEY")
                     && ActiveRowMatches(s, 1, 0) && EnterButtonsMatch(s, null), TimeSpan.FromSeconds(5))
                 .Type("apple")
                 .WaitUntil(s => LetterRowIsVisible(s, "APPLE", 1) && EnterButtonsMatch(s, 1), TimeSpan.FromSeconds(5))
                 .Enter()
                 .WaitUntil(s => s.ContainsText("Solved in 2") && EnterButtonsMatch(s, null), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.R, Hex1bModifiers.Control)
-                .WaitUntil(s => s.ContainsText("6  remaining") && ActiveRowMatches(s, 0, 0)
+                .WaitUntil(s => s.ContainsText("6 remaining") && ActiveRowMatches(s, 0, 0)
                     && EnterButtonsMatch(s, null), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.C, Hex1bModifiers.Control)
                 .Build().ApplyAsync(terminal, timeout.Token);
@@ -464,7 +464,7 @@ public class GameScreenTests
         var blue = Hex1bColor.FromRgb(35, 77, 125);
         for (var row = 0; row < 6; row++)
         {
-            var label = $"{6 - row}  remaining";
+            var label = $"{6 - row} remaining ";
             for (var y = 0; y < 3; y++)
             {
                 for (var x = 0; x < 15; x++)

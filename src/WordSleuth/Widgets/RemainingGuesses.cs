@@ -23,7 +23,7 @@ public static class RemainingGuesses
 
     private static void Draw(Surface surface, int remaining)
     {
-        var label = $"{remaining}  remaining";
+        var label = $"{remaining} remaining ";
         for (var y = 0; y < LetterTile.Height; y++)
         {
             for (var x = 0; x < Width; x++)
