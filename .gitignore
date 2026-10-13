@@ -1,0 +1,8 @@
+**/bin/
+**/obj/
+.aspire/
+.agents/
+.tools/
+TestResults/
+*.user
+*.suo
