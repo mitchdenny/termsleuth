@@ -13,9 +13,9 @@ public class GameScreenTests
     [InlineData(80, 60, "APPLE")]
     [InlineData(80, 30, "APPLE")]
     [InlineData(80, 60, "MWXYZ")]
-    [InlineData(52, 28, "MWXYZ")]
+    [InlineData(54, 28, "MWXYZ")]
     [InlineData(120, 40, "APPLE")]
-    [InlineData(53, 29, "APPLE")]
+    [InlineData(55, 29, "APPLE")]
     public async Task RealInputUpdatesTheRenderedBoardAndCanWinRestartAndQuit(int width, int height, string answer)
     {
         var game = new GameState(answer);
@@ -149,7 +149,7 @@ public class GameScreenTests
     [Theory]
     [InlineData(80, 60)]
     [InlineData(80, 30)]
-    [InlineData(52, 28)]
+    [InlineData(54, 28)]
     public async Task ActiveTilesAndHalfBlockCursorFollowTypingSubmissionAndRestart(int width, int height)
     {
         var game = new GameState("ZZZZZ");
@@ -202,8 +202,8 @@ public class GameScreenTests
 
     [Theory]
     [InlineData(80, 60, true)]
-    [InlineData(52, 28, true)]
-    [InlineData(53, 29, false)]
+    [InlineData(54, 28, true)]
+    [InlineData(55, 29, false)]
     [InlineData(120, 40, false)]
     public async Task BeveledEnterButtonAppearsWithoutMovingTheGridAndSubmits(int width, int height, bool click)
     {
@@ -273,14 +273,14 @@ public class GameScreenTests
         var highlight = Hex1bColor.FromRgb(242, 224, 189);
         var shadow = Hex1bColor.FromRgb(130, 111, 80);
         var ink = Hex1bColor.FromRgb(56, 46, 32);
-        string[] characters = ["▀▀▀▀▀▀▀▀▀▀", "▀▀ENTER ↵▀", "▀▀▀▀▀▀▀▀▀▀"];
+        string[] characters = ["▀▀▀▀▀▀▀▀▀▀▀", "▀▀ENTER ↵▀▀", "▀▀▀▀▀▀▀▀▀▀▀"];
         var left = (snapshot.Width - 52) / 2 + 41;
         var top = (snapshot.Height - 28) / 2;
         for (var row = 0; row < 6; row++)
         {
             for (var y = 0; y < 3; y++)
             {
-                for (var x = 0; x < 10; x++)
+                for (var x = 0; x < 11; x++)
                 {
                     var cell = snapshot.GetCell(left + x, top + row * 4 + y);
                     if (row != visibleRow)
@@ -293,8 +293,8 @@ public class GameScreenTests
                         continue;
                     }
 
-                    var foreground = y == 0 || x == 0 ? highlight : x == 9 ? shadow : face;
-                    var background = y == 2 || x == 9 ? shadow : x == 0 ? highlight : face;
+                    var foreground = y == 0 || x == 0 ? highlight : x == 10 ? shadow : face;
+                    var background = y == 2 || x == 10 ? shadow : x == 0 ? highlight : face;
                     if (y == 1 && x is >= 2 and <= 8)
                     {
                         foreground = ink;

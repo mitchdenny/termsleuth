@@ -11,7 +11,8 @@ upper-half-block underline marks the next empty cell and follows typing and
 Backspace. It disappears when the row is full or the game is finished.
 A beige, beveled `ENTER ↵` button appears beside a full active row. Click it or
 press Enter to submit. Equal invisible space on both sides keeps the tiles
-centered and stationary as the button appears and disappears.
+centered and stationary as the button appears and disappears. The label has
+one cell of beige padding between each end and the bevel.
 
 ## Run
 
@@ -43,7 +44,7 @@ as they occur in the answer. Ctrl+R starts a new game; Ctrl+C quits.
 All A-Z letters appear alphabetically below the grid. Unused letters have blue
 backgrounds and `.` markers; submitted letters use their best result so far.
 Starting a new game resets all letters to unused.
-Use at least 52 columns and 28 rows to fit the board, alphabet, and status.
+Use at least 54 columns and 28 rows to fit the board, alphabet, and status.
 
 This initial version chooses randomly from a small built-in answer list and
 accepts any five ASCII letters as a guess; it does not yet enforce a dictionary

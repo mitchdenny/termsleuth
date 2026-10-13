@@ -103,7 +103,7 @@ public class GameBackgroundTests
 
     private static bool BlackMarginMatches(Hex1bTerminalSnapshot snapshot)
     {
-        var left = (snapshot.Width - 52) / 2;
+        var left = (snapshot.Width - 54) / 2;
         var top = (snapshot.Height - 28) / 2;
         for (var y = top; y < top + 28; y++)
         {

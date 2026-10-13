@@ -7,7 +7,7 @@ namespace WordSleuth;
 
 public static class EnterButton
 {
-    public const int Width = 10;
+    public const int Width = 11;
     private const string Label = "ENTER ↵";
     private const int LabelLeft = 2;
     private static readonly Hex1bColor Face = Hex1bColor.FromRgb(204, 185, 150);

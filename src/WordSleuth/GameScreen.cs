@@ -6,7 +6,7 @@ namespace WordSleuth;
 
 public sealed class GameScreen(GameState game, TimeProvider? timeProvider = null)
 {
-    private const int ContentWidth = 52;
+    private const int ContentWidth = WordRow.Width + 1;
     private const int ContentHeight = WordBoard.Height + 4;
     private readonly GameBackground background = new(timeProvider);
 
@@ -17,8 +17,9 @@ public sealed class GameScreen(GameState game, TimeProvider? timeProvider = null
             [
                 v.Align(Alignment.Center, WordBoard.Build(v, game.Guesses, game.CurrentGuess, game.IsFinished, game.Submit))
                     .FixedHeight(WordBoard.Height),
-                AlphabetGrid.Build(v, game.UsedLetters),
-                GuessStatus.Build(v, game.Guesses.Count, game.CurrentGuess, game.Message)
+                v.Padding(1, 1, 0, 0, AlphabetGrid.Build(v, game.UsedLetters)).FixedHeight(2),
+                v.Padding(1, 1, 0, 0, GuessStatus.Build(v, game.Guesses.Count, game.CurrentGuess, game.Message))
+                    .FixedHeight(2)
             ]).FixedWidth(ContentWidth).FixedHeight(ContentHeight)).Fill()
         ]).Fill().InputBindings(bindings =>
     {
