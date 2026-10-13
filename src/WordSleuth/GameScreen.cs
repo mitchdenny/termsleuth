@@ -12,14 +12,16 @@ public sealed class GameScreen(GameState game, TimeProvider? timeProvider = null
 
     public Hex1bWidget Build(RootContext context) => context.ZStack(z =>
         [
-            background.Build(z, ContentWidth, ContentHeight),
+            background.Build(z, ContentWidth, ContentHeight, game.Guesses.Count),
             z.Align(Alignment.Center, z.VStack(v =>
             [
                 v.Align(Alignment.Center, WordBoard.Build(v, game.Guesses, game.CurrentGuess, game.IsFinished, game.Submit))
                     .FixedHeight(WordBoard.Height),
                 v.Text("").FixedHeight(1),
-                v.Padding(1, 1, 0, 0, AlphabetGrid.Build(v, game.UsedLetters)).FixedHeight(2),
-                v.Padding(1, 1, 0, 0, GuessStatus.Build(v, game.Guesses.Count, game.CurrentGuess, game.Message))
+                v.Padding(3, 3, 0, 0, AlphabetGrid.Build(v, game.UsedLetters)).FixedHeight(2),
+                v.Padding(3, 3, 0, 0, GuessStatus.Build(v,
+                    game.IsFinished || game.HasInputError
+                        ? game.Message : ""))
                     .FixedHeight(2)
             ]).FixedWidth(ContentWidth).FixedHeight(ContentHeight)).Fill()
         ]).Fill().InputBindings(bindings =>

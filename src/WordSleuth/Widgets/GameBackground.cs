@@ -17,15 +17,17 @@ public sealed class GameBackground
         startedAt = this.timeProvider.GetTimestamp();
     }
 
-    public Hex1bWidget Build(WidgetContext<ZStackWidget> context, int contentWidth, int contentHeight) =>
+    public Hex1bWidget Build(WidgetContext<ZStackWidget> context, int contentWidth, int contentHeight, int guesses = 0) =>
         context.Surface(layers =>
         [
-            layers.Layer(surface => Draw(surface, contentWidth, contentHeight))
+            layers.Layer(surface => Draw(surface, contentWidth, contentHeight, guesses))
         ]).RedrawAfter(50).Fill();
 
-    private void Draw(Surface surface, int contentWidth, int contentHeight)
+    private void Draw(Surface surface, int contentWidth, int contentHeight, int guesses)
     {
         var seconds = timeProvider.GetElapsedTime(startedAt).TotalSeconds;
+        var pressure = Math.Clamp(guesses / (double)(GameState.MaxGuesses - 1), 0, 1);
+        var speed = 1 + pressure * 2;
         var pixelHeight = surface.Height * 2;
         if (bitmap.GetLength(0) != pixelHeight || bitmap.GetLength(1) != surface.Width)
         {
@@ -48,12 +50,13 @@ public sealed class GameBackground
 
                 // Overlapping angular waves form drifting rays rather than a uniform vignette.
                 var angle = Math.Atan2(dy, dx);
-                var rays = 0.55 + 0.25 * Math.Sin(angle * 7 + seconds * 0.9)
-                    + 0.2 * Math.Sin(angle * 11 - seconds * 0.65);
-                var ebb = 0.85 + 0.15 * Math.Sin(seconds * 0.7 + angle * 3);
+                var warp = pressure * 0.3 * Math.Sin(angle * 5 + seconds * speed);
+                var rays = 0.55 + 0.25 * Math.Sin((angle + warp) * 7 + seconds * speed * 0.9)
+                    + 0.2 * Math.Sin((angle - warp) * 11 - seconds * speed * 0.65);
+                var ebb = 0.85 + 0.15 * Math.Sin(seconds * speed * 0.7 + angle * 3);
                 var light = fade * rays * ebb;
-                bitmap[y, x] = Hex1bColor.FromRgb((byte)Math.Round(32 * light),
-                    (byte)Math.Round(38 * light), (byte)Math.Round(52 * light));
+                bitmap[y, x] = Hex1bColor.FromRgb((byte)Math.Round((24 + pressure * 72) * light),
+                    (byte)Math.Round((44 - pressure * 16) * light), (byte)Math.Round((52 - pressure * 28) * light));
             }
         }
 

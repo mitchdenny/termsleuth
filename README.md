@@ -4,11 +4,17 @@ A small Wordle-like terminal game built with [Hex1b](https://hex1b.dev).
 Find a five-letter word in six guesses. The game is centered in the terminal.
 Each tile shows a capital letter with two cells of horizontal padding on each
 side and one cell above and below. Tiles and guessing rows have one-cell gaps.
-Moving dark blue-gray rays light the terminal edges, fading to black
-around the game.
+Moving blue-green rays light the terminal edges, fading to black around the
+game. As guesses run out, the rays turn red, brighten, and become faster and
+more turbulent. Restarting restores the calm blue-green background.
 The active guessing row has dark gray tiles, including its empty cells. A red
 upper-half-block underline marks the next empty cell and follows typing and
 Backspace. It disappears when the row is full or the game is finished.
+A single-row blue `X remaining` prompt points toward the active row with a
+right-pointing Powerline glyph (U+E0B0); use a Powerline-capable terminal font.
+It follows the row after submission and disappears when the game ends.
+Routine instructions and the textual guess counter are omitted; errors and
+the final result still appear below the alphabet.
 A beige, beveled `ENTER ↵` button appears beside a full active row. Click it or
 press Enter to submit. Equal invisible space on both sides keeps the tiles
 centered and stationary as the button appears and disappears. The label has
@@ -47,7 +53,7 @@ tiles: unused letters are blue-gray, correct letters green, and misplaced
 letters yellow. Letters ruled out by submitted guesses are strongly faded.
 Submitted letters use their best result so far.
 Starting a new game resets all letters to unused.
-Use at least 54 columns and 29 rows to fit the board, alphabet, and status.
+Use at least 58 columns and 29 rows to fit the board, alphabet, and status.
 
 This initial version chooses randomly from a small built-in answer list and
 accepts any five ASCII letters as a guess; it does not yet enforce a dictionary
@@ -58,7 +64,8 @@ or offer a shared daily puzzle.
 `Program.cs` only starts the terminal. `GameScreen` composes the screen and owns
 input bindings; `GameState` owns guessing and feedback. Classes in `Widgets/`
 have concise `Build` methods with explicit rendering inputs: `WordBoard` composes
-`WordRow`, `LetterTile`, `ActiveCellIndicator`, and the custom surface `EnterButton`,
+`WordRow`, `LetterTile`, `ActiveCellIndicator`, and the custom surfaces
+`RemainingGuesses` and `EnterButton`,
 while `AlphabetGrid` composes `AlphabetRow` and
 `AlphabetLetter`. `GuessStatus` renders the current guess and status, and
 `TileStyle` applies full-cell colors, with separate palettes for the guessing
@@ -66,7 +73,8 @@ tiles and muted alphabet.
 `GameBackground` uses surface layers to animate the backdrop behind the widgets.
 It reuses an in-memory bitmap with two pixel rows per terminal row, projecting
 each pair through an upper-half block's foreground and background colors.
-The rays drift and pulse at 20 frames per second, including while input is idle.
+The rays drift and pulse at 20 frames per second, including while input is idle,
+with color, intensity, speed, and angular turbulence driven by submitted guesses.
 
 ```sh
 dotnet test tests/WordSleuth.Tests

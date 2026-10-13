@@ -42,6 +42,7 @@ public sealed class GameState
     public string CurrentGuess { get; private set; } = "";
     public string Message { get; private set; } = "Find the five-letter word in six guesses.";
     public bool IsWon { get; private set; }
+    public bool HasInputError { get; private set; }
     public bool IsFinished => IsWon || guesses.Count == MaxGuesses;
 
     public void TypeLetter(char letter)
@@ -53,11 +54,13 @@ public sealed class GameState
 
         if (!char.IsAsciiLetter(letter))
         {
+            HasInputError = true;
             Message = "Use letters A-Z.";
             return;
         }
 
         CurrentGuess += char.ToUpperInvariant(letter);
+        HasInputError = false;
         Message = "Enter to submit; Backspace to edit.";
     }
 
@@ -66,6 +69,7 @@ public sealed class GameState
         if (!IsFinished && CurrentGuess.Length > 0)
         {
             CurrentGuess = CurrentGuess[..^1];
+            HasInputError = false;
             Message = "Enter to submit; Backspace to edit.";
         }
     }
@@ -79,10 +83,12 @@ public sealed class GameState
 
         if (CurrentGuess.Length != WordLength)
         {
+            HasInputError = true;
             Message = "Type five letters before submitting.";
             return;
         }
 
+        HasInputError = false;
         var feedback = Score(CurrentGuess);
         guesses.Add(new Guess(CurrentGuess, Array.AsReadOnly(feedback)));
         for (var i = 0; i < WordLength; i++)
@@ -110,6 +116,7 @@ public sealed class GameState
         usedLetters.Clear();
         CurrentGuess = "";
         IsWon = false;
+        HasInputError = false;
         Message = "Find the five-letter word in six guesses.";
     }
 

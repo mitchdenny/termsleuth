@@ -13,15 +13,15 @@ public class GameScreenTests
     [InlineData(80, 60, "APPLE")]
     [InlineData(80, 30, "APPLE")]
     [InlineData(80, 60, "MWXYZ")]
-    [InlineData(54, 29, "MWXYZ")]
+    [InlineData(58, 29, "MWXYZ")]
     [InlineData(120, 40, "APPLE")]
-    [InlineData(55, 30, "APPLE")]
+    [InlineData(59, 30, "APPLE")]
     public async Task RealInputUpdatesTheRenderedBoardAndCanWinRestartAndQuit(int width, int height, string answer)
     {
         var game = new GameState(answer);
         var screen = new GameScreen(game);
         await using var terminal = Hex1bTerminal.CreateBuilder()
-            .WithHeadless()
+            .WithHeadless(new TerminalCapabilities { SupportsTrueColor = true })
             .WithDimensions(width, height)
             .WithHex1bApp(screen.Build)
             .Build();
@@ -31,14 +31,13 @@ public class GameScreenTests
         try
         {
             await new Hex1bTerminalInputSequenceBuilder()
-                .WaitUntil(s => s.ContainsText("[_____]"), TimeSpan.FromSeconds(5))
+                .WaitUntil(s => s.ContainsText("6 remaining"), TimeSpan.FromSeconds(5))
                 .Type(answer[..4].ToLowerInvariant() + "x").Backspace().Type(answer[4].ToString())
-                .WaitUntil(s => s.ContainsText($"[{answer}]"), TimeSpan.FromSeconds(5))
                 .WaitUntil(s => LetterRowIsVisible(s, answer), TimeSpan.FromSeconds(5))
                 .Enter()
                 .WaitUntil(s => s.ContainsText("Solved in 1") && BoardGapsMatch(s, null, null), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.R, Hex1bModifiers.Control)
-                .WaitUntil(s => s.ContainsText("[_____]") && s.ContainsText("Find the five-letter"), TimeSpan.FromSeconds(5))
+                .WaitUntil(s => s.ContainsText("6 remaining"), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.C, Hex1bModifiers.Control)
                 .Build()
                 .ApplyAsync(terminal, timeout.Token);
@@ -82,12 +81,12 @@ public class GameScreenTests
         try
         {
             await new Hex1bTerminalInputSequenceBuilder()
-                .WaitUntil(s => s.ContainsText("[_____]") && LettersMatch(s, []), TimeSpan.FromSeconds(5))
+                .WaitUntil(s => s.ContainsText("6 remaining") && LettersMatch(s, []), TimeSpan.FromSeconds(5))
                 .Type("alley")
                 .WaitUntil(s => LetterRowIsVisible(s, "ALLEY") && TileColorsMatch(s, 0, pending)
                     && LettersMatch(s, []), TimeSpan.FromSeconds(5))
                 .Enter()
-                .WaitUntil(s => s.ContainsText("5 guesses left.") && LetterRowIsVisible(s, "ALLEY") && BoardGapsMatch(s, 1, 0)
+                .WaitUntil(s => s.ContainsText("5 remaining") && LetterRowIsVisible(s, "ALLEY") && BoardGapsMatch(s, 1, 0)
                     && TileColorsMatch(s, 0, scored) && TileColorsMatch(s, 1, pending)
                     && LettersMatch(s, new Dictionary<char, LetterFeedback>
                     {
@@ -97,7 +96,7 @@ public class GameScreenTests
                         ['Y'] = LetterFeedback.Absent
                     }), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.R, Hex1bModifiers.Control)
-                .WaitUntil(s => s.ContainsText("Find the five-letter") && LettersMatch(s, [])
+                .WaitUntil(s => s.ContainsText("6 remaining") && LettersMatch(s, [])
                     && TileColorsMatch(s, 0, pending), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.C, Hex1bModifiers.Control)
                 .Build()
@@ -150,7 +149,7 @@ public class GameScreenTests
     [Theory]
     [InlineData(80, 60)]
     [InlineData(80, 30)]
-    [InlineData(54, 29)]
+    [InlineData(58, 29)]
     public async Task ActiveTilesAndHalfBlockCursorFollowTypingSubmissionAndRestart(int width, int height)
     {
         var game = new GameState("ZZZZZ");
@@ -168,23 +167,23 @@ public class GameScreenTests
             await new Hex1bTerminalInputSequenceBuilder()
                 .WaitUntil(s => ActiveRowMatches(s, 0, 0) && TileColorsMatch(s, 1, black), TimeSpan.FromSeconds(5))
                 .Type("ab")
-                .WaitUntil(s => s.ContainsText("[AB___]") && ActiveRowMatches(s, 0, 2), TimeSpan.FromSeconds(5))
+                .WaitUntil(s => LetterRowIsVisible(s, "AB") && ActiveRowMatches(s, 0, 2), TimeSpan.FromSeconds(5))
                 .Backspace()
-                .WaitUntil(s => s.ContainsText("[A____]") && ActiveRowMatches(s, 0, 1), TimeSpan.FromSeconds(5))
+                .WaitUntil(s => LetterRowIsVisible(s, "A") && ActiveRowMatches(s, 0, 1), TimeSpan.FromSeconds(5))
                 .Type("bcde")
-                .WaitUntil(s => s.ContainsText("[ABCDE]") && ActiveRowMatches(s, 0, null), TimeSpan.FromSeconds(5))
+                .WaitUntil(s => LetterRowIsVisible(s, "ABCDE") && ActiveRowMatches(s, 0, null), TimeSpan.FromSeconds(5))
                 .Enter()
                 .WaitUntil(s => ActiveRowMatches(s, 1, 0), TimeSpan.FromSeconds(5))
                 .Type("fghij").Enter().Type("klmno").Enter().Type("pqrst").Enter().Type("uvwxy").Enter()
                 .WaitUntil(s => ActiveRowMatches(s, 5, 0), TimeSpan.FromSeconds(5))
                 .Type("zzzzz")
-                .WaitUntil(s => s.ContainsText("[ZZZZZ]") && ActiveRowMatches(s, 5, null)
+                .WaitUntil(s => LetterRowIsVisible(s, "ZZZZZ", 5) && ActiveRowMatches(s, 5, null)
                     && EnterButtonsMatch(s, 5), TimeSpan.FromSeconds(5))
                 .Enter()
                 .WaitUntil(s => s.ContainsText("Solved in 6") && TileColorsMatch(s, 5, green)
                     && BoardGapsMatch(s, null, null), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.R, Hex1bModifiers.Control)
-                .WaitUntil(s => s.ContainsText("[_____]") && ActiveRowMatches(s, 0, 0)
+                .WaitUntil(s => s.ContainsText("6 remaining") && ActiveRowMatches(s, 0, 0)
                     && TileColorsMatch(s, 1, black), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.C, Hex1bModifiers.Control)
                 .Build().ApplyAsync(terminal, timeout.Token);
@@ -203,8 +202,8 @@ public class GameScreenTests
 
     [Theory]
     [InlineData(80, 60, true)]
-    [InlineData(54, 29, true)]
-    [InlineData(55, 30, false)]
+    [InlineData(58, 29, true)]
+    [InlineData(59, 30, false)]
     [InlineData(120, 40, false)]
     public async Task BeveledEnterButtonAppearsWithoutMovingTheGridAndSubmits(int width, int height, bool click)
     {
@@ -233,7 +232,7 @@ public class GameScreenTests
                 .WaitUntil(s => LetterRowIsVisible(s, "ALLE") && ActiveRowMatches(s, 0, 4)
                     && EnterButtonsMatch(s, null), TimeSpan.FromSeconds(5))
                 .ClickAt(buttonX + 4, buttonY, MouseButton.Left)
-                .WaitUntil(s => s.ContainsText("Enter to submit; Backspace to edit.")
+                .WaitUntil(s => s.ContainsText("6 remaining")
                     && EnterButtonsMatch(s, null), TimeSpan.FromSeconds(5))
                 .Type("y")
                 .WaitUntil(s => LetterRowIsVisible(s, "ALLEY") && EnterButtonsMatch(s, 0), TimeSpan.FromSeconds(5))
@@ -249,14 +248,14 @@ public class GameScreenTests
                 submit.Enter();
             }
             await submit
-                .WaitUntil(s => s.ContainsText("5 guesses left.") && LetterRowIsVisible(s, "ALLEY")
+                .WaitUntil(s => s.ContainsText("5 remaining") && LetterRowIsVisible(s, "ALLEY")
                     && ActiveRowMatches(s, 1, 0) && EnterButtonsMatch(s, null), TimeSpan.FromSeconds(5))
                 .Type("apple")
                 .WaitUntil(s => LetterRowIsVisible(s, "APPLE", 1) && EnterButtonsMatch(s, 1), TimeSpan.FromSeconds(5))
                 .Enter()
                 .WaitUntil(s => s.ContainsText("Solved in 2") && EnterButtonsMatch(s, null), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.R, Hex1bModifiers.Control)
-                .WaitUntil(s => s.ContainsText("[_____]") && ActiveRowMatches(s, 0, 0)
+                .WaitUntil(s => s.ContainsText("6 remaining") && ActiveRowMatches(s, 0, 0)
                     && EnterButtonsMatch(s, null), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.C, Hex1bModifiers.Control)
                 .Build().ApplyAsync(terminal, timeout.Token);
@@ -437,6 +436,49 @@ public class GameScreenTests
                     || (cell.Character != " " && !Nullable.Equals<Hex1bColor>(cell.Foreground, Hex1bColor.Black)))
                 {
                     return false;
+                }
+            }
+        }
+        return RemainingPromptsMatch(snapshot, activeRow);
+    }
+
+    private static bool RemainingPromptsMatch(Hex1bTerminalSnapshot snapshot, int? activeRow)
+    {
+        if (snapshot.ContainsText("Guess ") || snapshot.ContainsText("Find the five-letter")
+            || snapshot.ContainsText("Enter to submit; Backspace"))
+        {
+            return false;
+        }
+
+        var left = (snapshot.Width - 58) / 2;
+        var top = (snapshot.Height - 29) / 2;
+        var blue = Hex1bColor.FromRgb(35, 77, 125);
+        for (var row = 0; row < 6; row++)
+        {
+            var label = $"{6 - row} remaining";
+            for (var y = 0; y < 3; y++)
+            {
+                for (var x = 0; x < 13; x++)
+                {
+                    var cell = snapshot.GetCell(left + x, top + row * 4 + y);
+                    if (row != activeRow)
+                    {
+                        if (!Nullable.Equals<Hex1bColor>(cell.Background, Hex1bColor.Black)
+                            || (cell.Character != " " && !Nullable.Equals<Hex1bColor>(cell.Foreground, Hex1bColor.Black)))
+                        {
+                            return false;
+                        }
+                        continue;
+                    }
+
+                    var character = y != 1 ? " " : x < 12 ? x > 0 ? label[x - 1].ToString() : " " : "\uE0B0";
+                    var foreground = y != 1 ? Hex1bColor.Black : x < 12 ? Hex1bColor.White : blue;
+                    var background = y == 1 && x < 12 ? blue : Hex1bColor.Black;
+                    if (cell.Character != character || !Nullable.Equals<Hex1bColor>(cell.Foreground, foreground)
+                        || !Nullable.Equals<Hex1bColor>(cell.Background, background))
+                    {
+                        return false;
+                    }
                 }
             }
         }

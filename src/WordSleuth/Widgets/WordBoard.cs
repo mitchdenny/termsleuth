@@ -14,7 +14,8 @@ public static class WordBoard
             {
                 var submitted = row < guesses.Count ? guesses[row] : null;
                 var word = submitted?.Word ?? (row == guesses.Count ? currentGuess : "");
-                return WordRow.Build(board, word, submit, submitted?.Feedback, !isFinished && row == guesses.Count);
+                return WordRow.Build(board, word, submit, submitted?.Feedback, !isFinished && row == guesses.Count,
+                    GameState.MaxGuesses - guesses.Count);
             }).ToArray())
             .FixedWidth(WordRow.Width)
             .FixedHeight(Height);
