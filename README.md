@@ -41,10 +41,13 @@ Green tiles are correct, yellow tiles are in the wrong position,
 and gray tiles are absent. Letters stay white over
 the colored tile backgrounds. Duplicate letters are scored only as many times
 as they occur in the answer. Ctrl+R starts a new game; Ctrl+C quits.
-All A-Z letters appear alphabetically below the grid. Unused letters have blue
-backgrounds and `.` markers; submitted letters use their best result so far.
+All A-Z letters appear alphabetically one blank row below the grid, without
+feedback symbols. Their colors are darker and more muted than the guessing
+tiles: unused letters are blue-gray, correct letters green, and misplaced
+letters yellow. Letters ruled out by submitted guesses are strongly faded.
+Submitted letters use their best result so far.
 Starting a new game resets all letters to unused.
-Use at least 54 columns and 28 rows to fit the board, alphabet, and status.
+Use at least 54 columns and 29 rows to fit the board, alphabet, and status.
 
 This initial version chooses randomly from a small built-in answer list and
 accepts any five ASCII letters as a guess; it does not yet enforce a dictionary
@@ -58,7 +61,8 @@ have concise `Build` methods with explicit rendering inputs: `WordBoard` compose
 `WordRow`, `LetterTile`, `ActiveCellIndicator`, and the custom surface `EnterButton`,
 while `AlphabetGrid` composes `AlphabetRow` and
 `AlphabetLetter`. `GuessStatus` renders the current guess and status, and
-`TileStyle` shares feedback colors and markers between both tile types.
+`TileStyle` applies full-cell colors, with separate palettes for the guessing
+tiles and muted alphabet.
 `GameBackground` uses surface layers to animate the backdrop behind the widgets.
 It reuses an in-memory bitmap with two pixel rows per terminal row, projecting
 each pair through an upper-half block's foreground and background colors.

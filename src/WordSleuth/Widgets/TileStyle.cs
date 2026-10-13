@@ -6,13 +6,6 @@ namespace WordSleuth;
 
 internal static class TileStyle
 {
-    public static string Marker(LetterFeedback feedback) => feedback switch
-    {
-        LetterFeedback.Correct => "=",
-        LetterFeedback.Present => "~",
-        _ => "-"
-    };
-
     public static Hex1bWidget Build<T>(WidgetContext<T> context, Hex1bWidget child, LetterFeedback? feedback,
         Hex1bColor? pendingBackground = null) where T : Hex1bWidget
     {
@@ -24,7 +17,12 @@ internal static class TileStyle
             _ => pendingBackground ?? Hex1bColor.Black
         };
 
-        return context.EffectPanel(child, surface =>
+        return Build(context, child, Hex1bColor.White, background);
+    }
+
+    public static Hex1bWidget Build<T>(WidgetContext<T> context, Hex1bWidget child,
+        Hex1bColor foreground, Hex1bColor background) where T : Hex1bWidget =>
+        context.EffectPanel(child, surface =>
         {
             for (var y = 0; y < surface.Height; y++)
             {
@@ -33,11 +31,10 @@ internal static class TileStyle
                     surface[x, y] = surface[x, y] with
                     {
                         Character = string.IsNullOrEmpty(surface[x, y].Character) ? " " : surface[x, y].Character,
-                        Foreground = Hex1bColor.White,
+                        Foreground = foreground,
                         Background = background
                     };
                 }
             }
         });
-    }
 }

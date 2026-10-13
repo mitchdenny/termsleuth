@@ -7,7 +7,7 @@ namespace WordSleuth;
 public sealed class GameScreen(GameState game, TimeProvider? timeProvider = null)
 {
     private const int ContentWidth = WordRow.Width + 1;
-    private const int ContentHeight = WordBoard.Height + 4;
+    private const int ContentHeight = WordBoard.Height + 5;
     private readonly GameBackground background = new(timeProvider);
 
     public Hex1bWidget Build(RootContext context) => context.ZStack(z =>
@@ -17,6 +17,7 @@ public sealed class GameScreen(GameState game, TimeProvider? timeProvider = null
             [
                 v.Align(Alignment.Center, WordBoard.Build(v, game.Guesses, game.CurrentGuess, game.IsFinished, game.Submit))
                     .FixedHeight(WordBoard.Height),
+                v.Text("").FixedHeight(1),
                 v.Padding(1, 1, 0, 0, AlphabetGrid.Build(v, game.UsedLetters)).FixedHeight(2),
                 v.Padding(1, 1, 0, 0, GuessStatus.Build(v, game.Guesses.Count, game.CurrentGuess, game.Message))
                     .FixedHeight(2)

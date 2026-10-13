@@ -13,9 +13,9 @@ public class GameScreenTests
     [InlineData(80, 60, "APPLE")]
     [InlineData(80, 30, "APPLE")]
     [InlineData(80, 60, "MWXYZ")]
-    [InlineData(54, 28, "MWXYZ")]
+    [InlineData(54, 29, "MWXYZ")]
     [InlineData(120, 40, "APPLE")]
-    [InlineData(55, 29, "APPLE")]
+    [InlineData(55, 30, "APPLE")]
     public async Task RealInputUpdatesTheRenderedBoardAndCanWinRestartAndQuit(int width, int height, string answer)
     {
         var game = new GameState(answer);
@@ -89,12 +89,12 @@ public class GameScreenTests
                 .Enter()
                 .WaitUntil(s => s.ContainsText("5 guesses left.") && LetterRowIsVisible(s, "ALLEY") && BoardGapsMatch(s, 1, 0)
                     && TileColorsMatch(s, 0, scored) && TileColorsMatch(s, 1, pending)
-                    && LettersMatch(s, new Dictionary<char, (string, Hex1bColor?)>
+                    && LettersMatch(s, new Dictionary<char, LetterFeedback>
                     {
-                        ['A'] = ("=", scored[0]),
-                        ['E'] = ("~", scored[3]),
-                        ['L'] = ("~", scored[1]),
-                        ['Y'] = ("-", scored[4])
+                        ['A'] = LetterFeedback.Correct,
+                        ['E'] = LetterFeedback.Present,
+                        ['L'] = LetterFeedback.Present,
+                        ['Y'] = LetterFeedback.Absent
                     }), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.R, Hex1bModifiers.Control)
                 .WaitUntil(s => s.ContainsText("Find the five-letter") && LettersMatch(s, [])
@@ -127,14 +127,15 @@ public class GameScreenTests
 
         var screen = new GameScreen(game);
         await using var terminal = Hex1bTerminal.CreateBuilder()
-            .WithHeadless().WithDimensions(80, 30).WithHex1bApp(screen.Build).Build();
+            .WithHeadless(new TerminalCapabilities { SupportsTrueColor = true })
+            .WithDimensions(80, 30).WithHex1bApp(screen.Build).Build();
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         var running = terminal.RunAsync(timeout.Token);
         try
         {
             await new Hex1bTerminalInputSequenceBuilder()
-                .WaitUntil(s => s.ContainsText(" A-  B-  C-  D-  E-  F-  G-  H-  I-  J-  K-  L-  M- ")
-                    && s.ContainsText(" N-  O-  P-  Q-  R-  S-  T-  U-  V-  W-  X-  Y-  Z= ")
+                .WaitUntil(s => LettersMatch(s, "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToDictionary(
+                    letter => letter, letter => letter == 'Z' ? LetterFeedback.Correct : LetterFeedback.Absent))
                     && s.GetCell(15, 25).Character == "A" && s.GetCell(63, 26).Character == "Z", TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.C, Hex1bModifiers.Control).Build().ApplyAsync(terminal, timeout.Token);
             await running.WaitAsync(timeout.Token);
@@ -149,7 +150,7 @@ public class GameScreenTests
     [Theory]
     [InlineData(80, 60)]
     [InlineData(80, 30)]
-    [InlineData(54, 28)]
+    [InlineData(54, 29)]
     public async Task ActiveTilesAndHalfBlockCursorFollowTypingSubmissionAndRestart(int width, int height)
     {
         var game = new GameState("ZZZZZ");
@@ -202,8 +203,8 @@ public class GameScreenTests
 
     [Theory]
     [InlineData(80, 60, true)]
-    [InlineData(54, 28, true)]
-    [InlineData(55, 29, false)]
+    [InlineData(54, 29, true)]
+    [InlineData(55, 30, false)]
     [InlineData(120, 40, false)]
     public async Task BeveledEnterButtonAppearsWithoutMovingTheGridAndSubmits(int width, int height, bool click)
     {
@@ -215,12 +216,13 @@ public class GameScreenTests
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
         var running = terminal.RunAsync(timeout.Token);
         var buttonX = (width - 52) / 2 + 41;
-        var buttonY = (height - 28) / 2 + 1;
+        var buttonY = (height - 29) / 2 + 1;
 
         try
         {
             await new Hex1bTerminalInputSequenceBuilder()
-                .WaitUntil(s => ActiveRowMatches(s, 0, 0) && EnterButtonsMatch(s, null), TimeSpan.FromSeconds(5))
+                .WaitUntil(s => ActiveRowMatches(s, 0, 0) && EnterButtonsMatch(s, null)
+                    && LettersMatch(s, []), TimeSpan.FromSeconds(5))
                 .ClickAt(buttonX + 4, buttonY, MouseButton.Left)
                 .Type("alle")
                 .WaitUntil(s => ActiveRowMatches(s, 0, 4) && LetterRowIsVisible(s, "ALLE")
@@ -275,7 +277,7 @@ public class GameScreenTests
         var ink = Hex1bColor.FromRgb(56, 46, 32);
         string[] characters = ["▀▀▀▀▀▀▀▀▀▀▀", "▀▀ENTER ↵▀▀", "▀▀▀▀▀▀▀▀▀▀▀"];
         var left = (snapshot.Width - 52) / 2 + 41;
-        var top = (snapshot.Height - 28) / 2;
+        var top = (snapshot.Height - 29) / 2;
         for (var row = 0; row < 6; row++)
         {
             for (var y = 0; y < 3; y++)
@@ -312,21 +314,40 @@ public class GameScreenTests
         return true;
     }
 
-    private static bool LettersMatch(Hex1bTerminalSnapshot snapshot, Dictionary<char, (string Marker, Hex1bColor? Background)> usedLetters)
+    private static bool LettersMatch(Hex1bTerminalSnapshot snapshot, Dictionary<char, LetterFeedback> usedLetters)
     {
+        var left = (snapshot.Width - 52) / 2;
+        var top = (snapshot.Height - 29) / 2;
+        for (var x = left - 1; x < left + 53; x++)
+        {
+            var cell = snapshot.GetCell(x, top + 24);
+            if (!Nullable.Equals<Hex1bColor>(cell.Background, Hex1bColor.Black)
+                || (cell.Character != " " && !Nullable.Equals<Hex1bColor>(cell.Foreground, Hex1bColor.Black)))
+            {
+                return false;
+            }
+        }
+
         for (var index = 0; index < 26; index++)
         {
             var letter = (char)('A' + index);
-            var (marker, background) = usedLetters.TryGetValue(letter, out var result)
+            var feedback = usedLetters.TryGetValue(letter, out var result)
                 ? result
-                : (".", Hex1bColor.FromRgb(45, 70, 95));
-            var expected = $" {letter}{marker} ";
-            var y = (snapshot.Height - 28) / 2 + 24 + index / 13;
+                : (LetterFeedback?)null;
+            var (foreground, background) = feedback switch
+            {
+                LetterFeedback.Correct => (Hex1bColor.FromRgb(145, 175, 140), Hex1bColor.FromRgb(32, 54, 30)),
+                LetterFeedback.Present => (Hex1bColor.FromRgb(175, 160, 105), Hex1bColor.FromRgb(58, 50, 23)),
+                LetterFeedback.Absent => (Hex1bColor.FromRgb(48, 48, 54), Hex1bColor.FromRgb(10, 10, 12)),
+                _ => (Hex1bColor.FromRgb(135, 145, 160), Hex1bColor.FromRgb(22, 32, 44))
+            };
+            var expected = $" {letter}  ";
+            var y = top + 25 + index / 13;
             for (var offset = 0; offset < 4; offset++)
             {
                 var cell = snapshot.GetCell((snapshot.Width - 52) / 2 + index % 13 * 4 + offset, y);
                 if (cell.Character != expected[offset].ToString()
-                    || !Nullable.Equals<Hex1bColor>(cell.Foreground, Hex1bColor.White)
+                    || !Nullable.Equals<Hex1bColor>(cell.Foreground, foreground)
                     || !Nullable.Equals(cell.Background, background))
                 {
                     return false;
@@ -341,7 +362,7 @@ public class GameScreenTests
     {
         for (var column = 0; column < backgrounds.Length; column++)
         {
-            var top = (snapshot.Height - 28) / 2 + row * 4;
+            var top = (snapshot.Height - 29) / 2 + row * 4;
             var left = (snapshot.Width - 52) / 2 + 11 + column * 6;
             for (var y = top; y < top + 3; y++)
             {
@@ -376,7 +397,7 @@ public class GameScreenTests
                 {
                     var expected = x == 2 && y == 1 ? word[column].ToString() : " ";
                     var left = (snapshot.Width - 52) / 2 + 11 + column * 6;
-                    var top = (snapshot.Height - 28) / 2 + row * 4;
+                    var top = (snapshot.Height - 29) / 2 + row * 4;
                     if (snapshot.GetCell(left + x, top + y).Character != expected)
                     {
                         return false;
@@ -391,7 +412,7 @@ public class GameScreenTests
     private static bool BoardGapsMatch(Hex1bTerminalSnapshot snapshot, int? activeRow, int? activeColumn)
     {
         var left = (snapshot.Width - 52) / 2 + 11;
-        var top = (snapshot.Height - 28) / 2;
+        var top = (snapshot.Height - 29) / 2;
         for (var y = 0; y < 24; y++)
         {
             for (var x = 0; x < 29; x++)
