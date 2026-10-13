@@ -43,8 +43,12 @@ or offer a shared daily puzzle.
 
 ## Develop
 
-`Program.cs` only starts the terminal. `GameScreen` builds the widget tree and
-input bindings; `GameState` owns guessing and feedback.
+`Program.cs` only starts the terminal. `GameScreen` composes the screen and owns
+input bindings; `GameState` owns guessing and feedback. Classes in `Widgets/`
+have concise `Build` methods with explicit rendering inputs: `WordBoard` composes
+`WordRow` and `LetterTile`, while `AlphabetGrid` composes `AlphabetRow` and
+`AlphabetLetter`. Header, status, and help are separate components, and
+`TileStyle` shares feedback colors and markers between both tile types.
 
 ```sh
 dotnet test tests/WordSleuth.Tests
