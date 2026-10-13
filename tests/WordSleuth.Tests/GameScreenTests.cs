@@ -13,9 +13,9 @@ public class GameScreenTests
     [InlineData(80, 60, "APPLE")]
     [InlineData(80, 30, "APPLE")]
     [InlineData(80, 60, "MWXYZ")]
-    [InlineData(60, 29, "MWXYZ")]
+    [InlineData(62, 29, "MWXYZ")]
     [InlineData(120, 40, "APPLE")]
-    [InlineData(61, 30, "APPLE")]
+    [InlineData(63, 30, "APPLE")]
     public async Task RealInputUpdatesTheRenderedBoardAndCanWinRestartAndQuit(int width, int height, string answer)
     {
         var game = new GameState(answer);
@@ -149,7 +149,7 @@ public class GameScreenTests
     [Theory]
     [InlineData(80, 60)]
     [InlineData(80, 30)]
-    [InlineData(60, 29)]
+    [InlineData(62, 29)]
     public async Task ActiveTilesAndHalfBlockCursorFollowTypingSubmissionAndRestart(int width, int height)
     {
         var game = new GameState("ZZZZZ");
@@ -202,8 +202,8 @@ public class GameScreenTests
 
     [Theory]
     [InlineData(80, 60, true)]
-    [InlineData(60, 29, true)]
-    [InlineData(61, 30, false)]
+    [InlineData(62, 29, true)]
+    [InlineData(63, 30, false)]
     [InlineData(120, 40, false)]
     public async Task BeveledEnterButtonAppearsWithoutMovingTheGridAndSubmits(int width, int height, bool click)
     {
@@ -308,7 +308,7 @@ public class GameScreenTests
                         return false;
                     }
                 }
-                for (var x = 11; x < 14; x++)
+                for (var x = 11; x < 15; x++)
                 {
                     var cell = snapshot.GetCell(left + x, top + row * 4 + y);
                     if (!Nullable.Equals<Hex1bColor>(cell.Background, Hex1bColor.Black)
@@ -459,7 +459,7 @@ public class GameScreenTests
             return false;
         }
 
-        var left = (snapshot.Width - 60) / 2;
+        var left = (snapshot.Width - 62) / 2;
         var top = (snapshot.Height - 29) / 2;
         var blue = Hex1bColor.FromRgb(35, 77, 125);
         for (var row = 0; row < 6; row++)
@@ -467,7 +467,7 @@ public class GameScreenTests
             var label = $"{6 - row}  remaining";
             for (var y = 0; y < 3; y++)
             {
-                for (var x = 0; x < 14; x++)
+                for (var x = 0; x < 15; x++)
                 {
                     var cell = snapshot.GetCell(left + x, top + row * 4 + y);
                     if (row != activeRow)
@@ -480,9 +480,11 @@ public class GameScreenTests
                         continue;
                     }
 
-                    var character = y != 1 ? " " : x < 13 ? x > 0 ? label[x - 1].ToString() : " " : "\uE0B0";
-                    var foreground = y != 1 ? Hex1bColor.Black : x < 13 ? Hex1bColor.White : blue;
-                    var background = y == 1 && x < 13 ? blue : Hex1bColor.Black;
+                    var character = x < 13 ? y == 1 && x > 0 ? label[x - 1].ToString() : " "
+                        : x == 13 ? y == 0 ? "\uE0B8" : y == 2 ? "\uE0BC" : " "
+                        : y == 1 ? "\uE0B0" : " ";
+                    var foreground = x < 13 ? Hex1bColor.White : blue;
+                    var background = x < 13 || x == 13 && y == 1 ? blue : Hex1bColor.Black;
                     if (cell.Character != character || !Nullable.Equals<Hex1bColor>(cell.Foreground, foreground)
                         || !Nullable.Equals<Hex1bColor>(cell.Background, background))
                     {

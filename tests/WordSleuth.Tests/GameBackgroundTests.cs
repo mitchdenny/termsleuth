@@ -165,7 +165,7 @@ public class GameBackgroundTests
 
     private static (Hex1bColor? Upper, Hex1bColor? Lower)[] EdgePixels(Hex1bTerminalSnapshot snapshot) =>
         Enumerable.Range(0, snapshot.Width)
-            .Where(x => x < (snapshot.Width - 60) / 2 || x >= (snapshot.Width - 60) / 2 + 60)
+            .Where(x => x < (snapshot.Width - 62) / 2 || x >= (snapshot.Width - 62) / 2 + 62)
             .Select(x => snapshot.GetCell(x, 0))
             .Concat(Enumerable.Range(0, snapshot.Height).Select(y => snapshot.GetCell(0, y)))
             .Select(cell => (cell.Foreground, cell.Background)).ToArray();
@@ -183,7 +183,7 @@ public class GameBackgroundTests
 
     private static bool BlackMarginMatches(Hex1bTerminalSnapshot snapshot)
     {
-        var left = (snapshot.Width - 60) / 2;
+        var left = (snapshot.Width - 62) / 2;
         var top = (snapshot.Height - 29) / 2;
         for (var y = top; y < top + 29; y++)
         {

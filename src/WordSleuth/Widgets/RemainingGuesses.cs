@@ -7,7 +7,7 @@ namespace WordSleuth;
 
 public static class RemainingGuesses
 {
-    public const int Width = 14;
+    public const int Width = 15;
     private static readonly Hex1bColor Blue = Hex1bColor.FromRgb(35, 77, 125);
 
     public static Hex1bWidget Build(WidgetContext<HStackWidget> context, int? remaining)
@@ -28,11 +28,12 @@ public static class RemainingGuesses
         {
             for (var x = 0; x < Width; x++)
             {
-                surface[x, y] = y != 1
-                    ? new SurfaceCell(" ", Hex1bColor.Black, Hex1bColor.Black)
-                    : x < Width - 1
-                        ? new SurfaceCell(x > 0 ? label[x - 1].ToString() : " ", Hex1bColor.White, Blue)
-                        : new SurfaceCell("\uE0B0", Blue, Hex1bColor.Black);
+                surface[x, y] = x < Width - 2
+                    ? new SurfaceCell(y == 1 && x > 0 ? label[x - 1].ToString() : " ", Hex1bColor.White, Blue)
+                    : x == Width - 2
+                        ? new SurfaceCell(y == 0 ? "\uE0B8" : y == 2 ? "\uE0BC" : " ", Blue,
+                            y == 1 ? Blue : Hex1bColor.Black)
+                        : new SurfaceCell(y == 1 ? "\uE0B0" : " ", Blue, Hex1bColor.Black);
             }
         }
     }

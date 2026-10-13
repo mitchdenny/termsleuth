@@ -10,8 +10,9 @@ more turbulent. Restarting restores the calm blue-green background.
 The active guessing row has dark gray tiles, including its empty cells. A red
 upper-half-block underline marks the next empty cell and follows typing and
 Backspace. It disappears when the row is full or the game is finished.
-A single-row blue `X remaining` prompt points toward the active row with a
-right-pointing Powerline glyph (U+E0B0); use a Powerline-capable terminal font.
+A three-row blue `X remaining` prompt points toward the active row with a
+two-column angled tip, using Powerline glyphs U+E0B8, U+E0B0, and U+E0BC.
+Use a Nerd Font with Powerline Extra support for the diagonal pieces.
 It follows the row after submission and disappears when the game ends.
 Routine instructions and the textual guess counter are omitted; errors and
 the final result still appear below the alphabet.
@@ -53,7 +54,7 @@ tiles: unused letters are blue-gray, correct letters green, and misplaced
 letters yellow. Letters ruled out by submitted guesses are strongly faded.
 Submitted letters use their best result so far.
 Starting a new game resets all letters to unused.
-Use at least 60 columns and 29 rows to fit the board, alphabet, and status.
+Use at least 62 columns and 29 rows to fit the board, alphabet, and status.
 
 This initial version chooses randomly from a small built-in answer list and
 accepts any five ASCII letters as a guess; it does not yet enforce a dictionary
