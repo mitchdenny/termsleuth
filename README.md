@@ -11,8 +11,9 @@ The active guessing row has dark gray tiles, including its empty cells. A red
 upper-half-block underline marks the next empty cell and follows typing and
 Backspace. It disappears when the row is full or the game is finished.
 A three-row blue `X remaining` prompt points toward the active row with a
-two-column angled tip, using Powerline glyphs U+E0B8, U+E0B0, and U+E0BC.
-Use a Nerd Font with Powerline Extra support for the diagonal pieces.
+two-column angled tip, using Powerline diagonals U+E0B8/U+E0BC and the narrow
+triangular block U+1FB6C at its center. Use a terminal font with Powerline Extra
+and Symbols for Legacy Computing support.
 It follows the row after submission and disappears when the game ends.
 Routine instructions and the textual guess counter are omitted; errors and
 the final result still appear below the alphabet.

@@ -482,7 +482,7 @@ public class GameScreenTests
 
                     var character = x < 13 ? y == 1 && x > 0 ? label[x - 1].ToString() : " "
                         : x == 13 ? y == 0 ? "\uE0B8" : y == 2 ? "\uE0BC" : " "
-                        : y == 1 ? "\uE0B0" : " ";
+                        : y == 1 ? "\U0001FB6C" : " ";
                     var foreground = x < 13 ? Hex1bColor.White : blue;
                     var background = x < 13 || x == 13 && y == 1 ? blue : Hex1bColor.Black;
                     if (cell.Character != character || !Nullable.Equals<Hex1bColor>(cell.Foreground, foreground)

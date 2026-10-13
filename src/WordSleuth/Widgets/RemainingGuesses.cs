@@ -33,7 +33,7 @@ public static class RemainingGuesses
                     : x == Width - 2
                         ? new SurfaceCell(y == 0 ? "\uE0B8" : y == 2 ? "\uE0BC" : " ", Blue,
                             y == 1 ? Blue : Hex1bColor.Black)
-                        : new SurfaceCell(y == 1 ? "\uE0B0" : " ", Blue, Hex1bColor.Black);
+                        : new SurfaceCell(y == 1 ? "\U0001FB6C" : " ", Blue, Hex1bColor.Black);
             }
         }
     }
