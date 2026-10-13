@@ -184,8 +184,8 @@ public class GameBackgroundTests
     private static bool BlackMarginMatches(Hex1bTerminalSnapshot snapshot)
     {
         var left = (snapshot.Width - 62) / 2;
-        var top = (snapshot.Height - 29) / 2;
-        for (var y = top; y < top + 29; y++)
+        var top = (snapshot.Height - 30) / 2;
+        for (var y = top; y < top + 30; y++)
         {
             var cell = snapshot.GetCell(left - 1, y);
             if (!Nullable.Equals<Hex1bColor>(cell.Foreground, Hex1bColor.Black)

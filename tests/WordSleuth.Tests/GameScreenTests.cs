@@ -13,9 +13,9 @@ public class GameScreenTests
     [InlineData(80, 60, "APPLE")]
     [InlineData(80, 30, "APPLE")]
     [InlineData(80, 60, "MWXYZ")]
-    [InlineData(62, 29, "MWXYZ")]
+    [InlineData(62, 30, "MWXYZ")]
     [InlineData(120, 40, "APPLE")]
-    [InlineData(63, 30, "APPLE")]
+    [InlineData(63, 31, "APPLE")]
     public async Task RealInputUpdatesTheRenderedBoardAndCanWinRestartAndQuit(int width, int height, string answer)
     {
         var game = new GameState(answer);
@@ -35,7 +35,7 @@ public class GameScreenTests
                 .Type(answer[..4].ToLowerInvariant() + "x").Backspace().Type(answer[4].ToString())
                 .WaitUntil(s => LetterRowIsVisible(s, answer), TimeSpan.FromSeconds(5))
                 .Enter()
-                .WaitUntil(s => s.ContainsText("Solved in 1") && BoardGapsMatch(s, null, null), TimeSpan.FromSeconds(5))
+                .WaitUntil(s => s.ContainsText("Solved in 1") && RemainingPromptsMatch(s, null), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.R, Hex1bModifiers.Control)
                 .WaitUntil(s => s.ContainsText("6 remaining"), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.C, Hex1bModifiers.Control)
@@ -112,10 +112,10 @@ public class GameScreenTests
     }
 
     [Fact]
-    public async Task AllUsedLettersFitBelowTheGridInAShortTerminal()
+    public async Task TwentyFiveUsedLettersFitBelowTheGridBeforeTheFinalGuess()
     {
         var game = new GameState("ZZZZZ");
-        foreach (var word in new[] { "ABCDE", "FGHIJ", "KLMNO", "PQRST", "UVWXY", "ZABCD" })
+        foreach (var word in new[] { "ABCDE", "FGHIJ", "KLMNO", "PQRST", "UVWXY" })
         {
             foreach (var letter in word)
             {
@@ -133,8 +133,8 @@ public class GameScreenTests
         try
         {
             await new Hex1bTerminalInputSequenceBuilder()
-                .WaitUntil(s => LettersMatch(s, "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToDictionary(
-                    letter => letter, letter => letter == 'Z' ? LetterFeedback.Correct : LetterFeedback.Absent))
+                .WaitUntil(s => LettersMatch(s, "ABCDEFGHIJKLMNOPQRSTUVWXY".ToDictionary(
+                    letter => letter, _ => LetterFeedback.Absent))
                     && s.GetCell(15, 25).Character == "A" && s.GetCell(63, 26).Character == "Z", TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.C, Hex1bModifiers.Control).Build().ApplyAsync(terminal, timeout.Token);
             await running.WaitAsync(timeout.Token);
@@ -149,7 +149,7 @@ public class GameScreenTests
     [Theory]
     [InlineData(80, 60)]
     [InlineData(80, 30)]
-    [InlineData(62, 29)]
+    [InlineData(62, 30)]
     public async Task ActiveTilesAndHalfBlockCursorFollowTypingSubmissionAndRestart(int width, int height)
     {
         var game = new GameState("ZZZZZ");
@@ -181,7 +181,7 @@ public class GameScreenTests
                     && EnterButtonsMatch(s, 5), TimeSpan.FromSeconds(5))
                 .Enter()
                 .WaitUntil(s => s.ContainsText("Solved in 6") && TileColorsMatch(s, 5, green)
-                    && BoardGapsMatch(s, null, null), TimeSpan.FromSeconds(5))
+                    && RemainingPromptsMatch(s, null), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.R, Hex1bModifiers.Control)
                 .WaitUntil(s => s.ContainsText("6 remaining") && ActiveRowMatches(s, 0, 0)
                     && TileColorsMatch(s, 1, black), TimeSpan.FromSeconds(5))
@@ -202,8 +202,8 @@ public class GameScreenTests
 
     [Theory]
     [InlineData(80, 60, true)]
-    [InlineData(62, 29, true)]
-    [InlineData(63, 30, false)]
+    [InlineData(62, 30, true)]
+    [InlineData(63, 31, false)]
     [InlineData(120, 40, false)]
     public async Task BeveledEnterButtonAppearsWithoutMovingTheGridAndSubmits(int width, int height, bool click)
     {
@@ -215,7 +215,7 @@ public class GameScreenTests
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
         var running = terminal.RunAsync(timeout.Token);
         var buttonX = (width - 52) / 2 + 41;
-        var buttonY = (height - 29) / 2 + 1;
+        var buttonY = (height - 30) / 2 + 1;
 
         try
         {
@@ -270,18 +270,22 @@ public class GameScreenTests
 
     private static bool EnterButtonsMatch(Hex1bTerminalSnapshot snapshot, int? visibleRow)
     {
+        if (snapshot.ContainsText("PLAY AGAIN"))
+        {
+            return !snapshot.ContainsText("SUBMIT");
+        }
         var face = Hex1bColor.FromRgb(204, 185, 150);
         var highlight = Hex1bColor.FromRgb(242, 224, 189);
         var shadow = Hex1bColor.FromRgb(130, 111, 80);
         var ink = Hex1bColor.FromRgb(56, 46, 32);
-        string[] characters = ["▀▀▀▀▀▀▀▀▀▀▀", "▀▀ENTER ↵▀▀", "▀▀▀▀▀▀▀▀▀▀▀"];
+        string[] characters = ["▀▀▀▀▀▀▀▀▀▀▀▀", "▀▀SUBMIT ↵▀▀", "▀▀▀▀▀▀▀▀▀▀▀▀"];
         var left = (snapshot.Width - 52) / 2 + 41;
-        var top = (snapshot.Height - 29) / 2;
+        var top = (snapshot.Height - 30) / 2;
         for (var row = 0; row < 6; row++)
         {
             for (var y = 0; y < 3; y++)
             {
-                for (var x = 0; x < 11; x++)
+                for (var x = 0; x < 12; x++)
                 {
                     var cell = snapshot.GetCell(left + x, top + row * 4 + y);
                     if (row != visibleRow)
@@ -294,9 +298,9 @@ public class GameScreenTests
                         continue;
                     }
 
-                    var foreground = y == 0 || x == 0 ? highlight : x == 10 ? shadow : face;
-                    var background = y == 2 || x == 10 ? shadow : x == 0 ? highlight : face;
-                    if (y == 1 && x is >= 2 and <= 8)
+                    var foreground = y == 0 || x == 0 ? highlight : x == 11 ? shadow : face;
+                    var background = y == 2 || x == 11 ? shadow : x == 0 ? highlight : face;
+                    if (y == 1 && x is >= 2 and <= 9)
                     {
                         foreground = ink;
                         background = face;
@@ -308,7 +312,7 @@ public class GameScreenTests
                         return false;
                     }
                 }
-                for (var x = 11; x < 15; x++)
+                for (var x = 12; x < 15; x++)
                 {
                     var cell = snapshot.GetCell(left + x, top + row * 4 + y);
                     if (!Nullable.Equals<Hex1bColor>(cell.Background, Hex1bColor.Black)
@@ -325,7 +329,7 @@ public class GameScreenTests
     private static bool LettersMatch(Hex1bTerminalSnapshot snapshot, Dictionary<char, LetterFeedback> usedLetters)
     {
         var left = (snapshot.Width - 52) / 2;
-        var top = (snapshot.Height - 29) / 2;
+        var top = (snapshot.Height - 30) / 2;
         for (var x = left - 1; x < left + 53; x++)
         {
             var cell = snapshot.GetCell(x, top + 24);
@@ -370,7 +374,7 @@ public class GameScreenTests
     {
         for (var column = 0; column < backgrounds.Length; column++)
         {
-            var top = (snapshot.Height - 29) / 2 + row * 4;
+            var top = (snapshot.Height - 30) / 2 + row * 4;
             var left = (snapshot.Width - 52) / 2 + 11 + column * 6;
             for (var y = top; y < top + 3; y++)
             {
@@ -405,7 +409,7 @@ public class GameScreenTests
                 {
                     var expected = x == 2 && y == 1 ? word[column].ToString() : " ";
                     var left = (snapshot.Width - 52) / 2 + 11 + column * 6;
-                    var top = (snapshot.Height - 29) / 2 + row * 4;
+                    var top = (snapshot.Height - 30) / 2 + row * 4;
                     if (snapshot.GetCell(left + x, top + y).Character != expected)
                     {
                         return false;
@@ -420,7 +424,7 @@ public class GameScreenTests
     private static bool BoardGapsMatch(Hex1bTerminalSnapshot snapshot, int? activeRow, int? activeColumn)
     {
         var left = (snapshot.Width - 52) / 2 + 11;
-        var top = (snapshot.Height - 29) / 2;
+        var top = (snapshot.Height - 30) / 2;
         for (var y = 0; y < 24; y++)
         {
             for (var x = 0; x < 29; x++)
@@ -459,8 +463,13 @@ public class GameScreenTests
             return false;
         }
 
+        if (activeRow is null)
+        {
+            return !snapshot.ContainsText("remaining");
+        }
+
         var left = (snapshot.Width - 62) / 2;
-        var top = (snapshot.Height - 29) / 2;
+        var top = (snapshot.Height - 30) / 2;
         var blue = Hex1bColor.FromRgb(35, 77, 125);
         for (var row = 0; row < 6; row++)
         {

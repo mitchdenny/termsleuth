@@ -16,11 +16,16 @@ triangular block U+1FB6C at its center. Use a terminal font with Powerline Extra
 and Symbols for Legacy Computing support.
 It follows the row after submission and disappears when the game ends.
 Routine instructions and the textual guess counter are omitted; errors and
-the final result still appear below the alphabet.
-A beige, beveled `ENTER ↵` button appears beside a full active row. Click it or
+the final result still appear below the alphabet or replay button.
+A beige, beveled `SUBMIT ↵` button appears beside a full active row. Click it or
 press Enter to submit. Equal invisible space on both sides keeps the tiles
 centered and stationary as the button appears and disappears. The label has
 one cell of beige padding between each end and the bevel.
+Winning fires a large burst of colorful half-block confetti inward from points
+at the bottom-left and bottom-right corners, with varied trajectories and
+velocities. It flows in front of the grid, falls under gravity, and settles
+into persistent uneven piles along the bottom. Replay controls and the result
+remain unobscured.
 
 ## Run
 
@@ -49,13 +54,17 @@ Green tiles are correct, yellow tiles are in the wrong position,
 and gray tiles are absent. Letters stay white over
 the colored tile backgrounds. Duplicate letters are scored only as many times
 as they occur in the answer. Ctrl+R starts a new game; Ctrl+C quits.
+F9 submits the answer to preview a win from any unfinished game.
+After a win or loss, the alphabet is replaced by a beveled `PLAY AGAIN ↵`
+button: bright green for a win, muted green for a loss. Click it or press Enter
+to start again. Restart clears the confetti, including any settled piles.
 All A-Z letters appear alphabetically one blank row below the grid, without
 feedback symbols. Their colors are darker and more muted than the guessing
 tiles: unused letters are blue-gray, correct letters green, and misplaced
 letters yellow. Letters ruled out by submitted guesses are strongly faded.
 Submitted letters use their best result so far.
 Starting a new game resets all letters to unused.
-Use at least 62 columns and 29 rows to fit the board, alphabet, and status.
+Use at least 62 columns and 30 rows to fit the board, footer, and status.
 
 This initial version chooses randomly from a small built-in answer list and
 accepts any five ASCII letters as a guess; it does not yet enforce a dictionary
@@ -69,7 +78,9 @@ have concise `Build` methods with explicit rendering inputs: `WordBoard` compose
 `WordRow`, `LetterTile`, `ActiveCellIndicator`, and the custom surfaces
 `RemainingGuesses` and `EnterButton`,
 while `AlphabetGrid` composes `AlphabetRow` and
-`AlphabetLetter`. `GuessStatus` renders the current guess and status, and
+`AlphabetLetter`. `GameFooter` switches between the alphabet and replay button;
+`BeveledButton` shares button geometry and palettes. `GuessStatus` renders
+errors and final results, and
 `TileStyle` applies full-cell colors, with separate palettes for the guessing
 tiles and muted alphabet.
 `GameBackground` uses surface layers to animate the backdrop behind the widgets.
@@ -77,9 +88,14 @@ It reuses an in-memory bitmap with two pixel rows per terminal row, projecting
 each pair through an upper-half block's foreground and background colors.
 The rays drift and pulse at 20 frames per second, including while input is idle,
 with color, intensity, speed, and angular turbulence driven by submitted guesses.
+`WinConfetti` renders a transparent foreground surface, integrating gravity in
+small time steps and allowing landed pieces to slide into neighboring piles.
+Particle positions and piles adapt to terminal resizing.
 
 ```sh
 dotnet test tests/WordSleuth.Tests
 ```
 
-Tests cover game rules and real Hex1b input/rendering in headless terminals.
+Tests cover game rules and real Hex1b input/rendering in headless terminals,
+including preview wins, replay input, button colors, foreground confetti,
+upward trajectories, settled piles, resizing, and reset using a deterministic clock.

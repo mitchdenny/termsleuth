@@ -17,7 +17,8 @@ public sealed class GameBackground
         startedAt = this.timeProvider.GetTimestamp();
     }
 
-    public Hex1bWidget Build(WidgetContext<ZStackWidget> context, int contentWidth, int contentHeight, int guesses = 0) =>
+    public Hex1bWidget Build(WidgetContext<ZStackWidget> context, int contentWidth, int contentHeight,
+        int guesses = 0) =>
         context.Surface(layers =>
         [
             layers.Layer(surface => Draw(surface, contentWidth, contentHeight, guesses))

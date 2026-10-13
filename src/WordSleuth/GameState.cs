@@ -103,9 +103,9 @@ public sealed class GameState
         IsWon = CurrentGuess == answer;
         CurrentGuess = "";
         Message = IsWon
-            ? $"Solved in {guesses.Count} of {MaxGuesses}! Ctrl+R for a new game."
+            ? $"Solved in {guesses.Count} of {MaxGuesses}!"
             : IsFinished
-                ? $"The word was {answer}. Ctrl+R for a new game."
+                ? $"The word was {answer}."
                 : $"{MaxGuesses - guesses.Count} guesses left.";
     }
 
@@ -118,6 +118,17 @@ public sealed class GameState
         IsWon = false;
         HasInputError = false;
         Message = "Find the five-letter word in six guesses.";
+    }
+
+    public void WinForTesting()
+    {
+        if (IsFinished)
+        {
+            return;
+        }
+
+        CurrentGuess = answer;
+        Submit();
     }
 
     private LetterFeedback[] Score(string word)

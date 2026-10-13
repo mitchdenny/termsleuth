@@ -5,6 +5,27 @@ namespace WordSleuth.Tests;
 public class GameStateTests
 {
     [Fact]
+    public void WinPreviewSubmitsTheAnswerThroughNormalScoringAndPreservesPreviousGuesses()
+    {
+        var game = new GameState("APPLE");
+        Type(game, "WORLD");
+        game.Submit();
+        Type(game, "ab");
+        game.WinForTesting();
+        Assert.True(game.IsWon);
+        Assert.Equal(2, game.Guesses.Count);
+        Assert.Equal("WORLD", game.Guesses[0].Word);
+        Assert.Equal("APPLE", game.Guesses[1].Word);
+        Assert.All(game.Guesses[1].Feedback, feedback => Assert.Equal(LetterFeedback.Correct, feedback));
+        Assert.Empty(game.CurrentGuess);
+        Assert.False(game.HasInputError);
+        game.WinForTesting();
+        Assert.Equal(2, game.Guesses.Count);
+        game.Restart();
+        Assert.False(game.IsWon);
+    }
+
+    [Fact]
     public void TypingNormalizesLettersCapsLengthAndSupportsBackspace()
     {
         var game = new GameState("APPLE");
