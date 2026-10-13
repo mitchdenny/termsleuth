@@ -9,6 +9,9 @@ around the game.
 The active guessing row has dark gray tiles, including its empty cells. A red
 upper-half-block underline marks the next empty cell and follows typing and
 Backspace. It disappears when the row is full or the game is finished.
+A beige, beveled `ENTER ↵` button appears beside a full active row. Click it or
+press Enter to submit. Equal invisible space on both sides keeps the tiles
+centered and stationary as the button appears and disappears.
 
 ## Run
 
@@ -51,7 +54,8 @@ or offer a shared daily puzzle.
 `Program.cs` only starts the terminal. `GameScreen` composes the screen and owns
 input bindings; `GameState` owns guessing and feedback. Classes in `Widgets/`
 have concise `Build` methods with explicit rendering inputs: `WordBoard` composes
-`WordRow`, `LetterTile`, and `ActiveCellIndicator`, while `AlphabetGrid` composes `AlphabetRow` and
+`WordRow`, `LetterTile`, `ActiveCellIndicator`, and the custom surface `EnterButton`,
+while `AlphabetGrid` composes `AlphabetRow` and
 `AlphabetLetter`. `GuessStatus` renders the current guess and status, and
 `TileStyle` shares feedback colors and markers between both tile types.
 `GameBackground` uses surface layers to animate the backdrop behind the widgets.

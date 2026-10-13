@@ -14,6 +14,6 @@ public static class ActiveCellIndicator
         return context.ThemePanel(theme => theme
                 .Set(GlobalTheme.ForegroundColor, Hex1bColor.FromRgb(230, 60, 60))
                 .Set(GlobalTheme.BackgroundColor, Hex1bColor.Black),
-            v => [v.Text(text.PadRight(WordRow.Width))]).FixedHeight(1);
+            v => [v.Text(text.PadRight(WordRow.TilesWidth))]).FixedHeight(1);
     }
 }

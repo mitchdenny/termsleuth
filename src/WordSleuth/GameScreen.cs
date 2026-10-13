@@ -15,7 +15,7 @@ public sealed class GameScreen(GameState game, TimeProvider? timeProvider = null
             background.Build(z, ContentWidth, ContentHeight),
             z.Align(Alignment.Center, z.VStack(v =>
             [
-                v.Align(Alignment.Center, WordBoard.Build(v, game.Guesses, game.CurrentGuess, game.IsFinished))
+                v.Align(Alignment.Center, WordBoard.Build(v, game.Guesses, game.CurrentGuess, game.IsFinished, game.Submit))
                     .FixedHeight(WordBoard.Height),
                 AlphabetGrid.Build(v, game.UsedLetters),
                 GuessStatus.Build(v, game.Guesses.Count, game.CurrentGuess, game.Message)

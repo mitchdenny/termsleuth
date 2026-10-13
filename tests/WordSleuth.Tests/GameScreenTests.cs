@@ -177,7 +177,8 @@ public class GameScreenTests
                 .Type("fghij").Enter().Type("klmno").Enter().Type("pqrst").Enter().Type("uvwxy").Enter()
                 .WaitUntil(s => ActiveRowMatches(s, 5, 0), TimeSpan.FromSeconds(5))
                 .Type("zzzzz")
-                .WaitUntil(s => s.ContainsText("[ZZZZZ]") && ActiveRowMatches(s, 5, null), TimeSpan.FromSeconds(5))
+                .WaitUntil(s => s.ContainsText("[ZZZZZ]") && ActiveRowMatches(s, 5, null)
+                    && EnterButtonsMatch(s, 5), TimeSpan.FromSeconds(5))
                 .Enter()
                 .WaitUntil(s => s.ContainsText("Solved in 6") && TileColorsMatch(s, 5, green)
                     && BoardGapsMatch(s, null, null), TimeSpan.FromSeconds(5))
@@ -198,6 +199,118 @@ public class GameScreenTests
     private static bool ActiveRowMatches(Hex1bTerminalSnapshot snapshot, int row, int? column) =>
         TileColorsMatch(snapshot, row, Enumerable.Repeat<Hex1bColor?>(Hex1bColor.FromRgb(24, 24, 28), 5).ToArray())
         && BoardGapsMatch(snapshot, row, column);
+
+    [Theory]
+    [InlineData(80, 60, true)]
+    [InlineData(52, 28, true)]
+    [InlineData(53, 29, false)]
+    [InlineData(120, 40, false)]
+    public async Task BeveledEnterButtonAppearsWithoutMovingTheGridAndSubmits(int width, int height, bool click)
+    {
+        var game = new GameState("APPLE");
+        var screen = new GameScreen(game);
+        await using var terminal = Hex1bTerminal.CreateBuilder().WithMouse()
+            .WithHeadless(new TerminalCapabilities { SupportsTrueColor = true, SupportsMouse = true })
+            .WithDimensions(width, height).WithHex1bApp(screen.Build).Build();
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+        var running = terminal.RunAsync(timeout.Token);
+        var buttonX = (width - 52) / 2 + 41;
+        var buttonY = (height - 28) / 2 + 1;
+
+        try
+        {
+            await new Hex1bTerminalInputSequenceBuilder()
+                .WaitUntil(s => ActiveRowMatches(s, 0, 0) && EnterButtonsMatch(s, null), TimeSpan.FromSeconds(5))
+                .ClickAt(buttonX + 4, buttonY, MouseButton.Left)
+                .Type("alle")
+                .WaitUntil(s => ActiveRowMatches(s, 0, 4) && LetterRowIsVisible(s, "ALLE")
+                    && EnterButtonsMatch(s, null), TimeSpan.FromSeconds(5))
+                .Type("y")
+                .WaitUntil(s => LetterRowIsVisible(s, "ALLEY") && EnterButtonsMatch(s, 0), TimeSpan.FromSeconds(5))
+                .Backspace()
+                .WaitUntil(s => LetterRowIsVisible(s, "ALLE") && ActiveRowMatches(s, 0, 4)
+                    && EnterButtonsMatch(s, null), TimeSpan.FromSeconds(5))
+                .ClickAt(buttonX + 4, buttonY, MouseButton.Left)
+                .WaitUntil(s => s.ContainsText("Enter to submit; Backspace to edit.")
+                    && EnterButtonsMatch(s, null), TimeSpan.FromSeconds(5))
+                .Type("y")
+                .WaitUntil(s => LetterRowIsVisible(s, "ALLEY") && EnterButtonsMatch(s, 0), TimeSpan.FromSeconds(5))
+                .Build().ApplyAsync(terminal, timeout.Token);
+
+            var submit = new Hex1bTerminalInputSequenceBuilder();
+            if (click)
+            {
+                submit.ClickAt(buttonX + 4, buttonY, MouseButton.Left);
+            }
+            else
+            {
+                submit.Enter();
+            }
+            await submit
+                .WaitUntil(s => s.ContainsText("5 guesses left.") && LetterRowIsVisible(s, "ALLEY")
+                    && ActiveRowMatches(s, 1, 0) && EnterButtonsMatch(s, null), TimeSpan.FromSeconds(5))
+                .Type("apple")
+                .WaitUntil(s => LetterRowIsVisible(s, "APPLE", 1) && EnterButtonsMatch(s, 1), TimeSpan.FromSeconds(5))
+                .Enter()
+                .WaitUntil(s => s.ContainsText("Solved in 2") && EnterButtonsMatch(s, null), TimeSpan.FromSeconds(5))
+                .Key(Hex1bKey.R, Hex1bModifiers.Control)
+                .WaitUntil(s => s.ContainsText("[_____]") && ActiveRowMatches(s, 0, 0)
+                    && EnterButtonsMatch(s, null), TimeSpan.FromSeconds(5))
+                .Key(Hex1bKey.C, Hex1bModifiers.Control)
+                .Build().ApplyAsync(terminal, timeout.Token);
+            await running.WaitAsync(timeout.Token);
+        }
+        finally
+        {
+            await timeout.CancelAsync();
+            await running;
+        }
+    }
+
+    private static bool EnterButtonsMatch(Hex1bTerminalSnapshot snapshot, int? visibleRow)
+    {
+        var face = Hex1bColor.FromRgb(204, 185, 150);
+        var highlight = Hex1bColor.FromRgb(242, 224, 189);
+        var shadow = Hex1bColor.FromRgb(130, 111, 80);
+        var ink = Hex1bColor.FromRgb(56, 46, 32);
+        string[] characters = ["▀▀▀▀▀▀▀▀▀▀", "▀ENTER ↵▀▀", "▀▀▀▀▀▀▀▀▀▀"];
+        var left = (snapshot.Width - 52) / 2 + 41;
+        var top = (snapshot.Height - 28) / 2;
+        for (var row = 0; row < 6; row++)
+        {
+            for (var y = 0; y < 3; y++)
+            {
+                for (var x = 0; x < 10; x++)
+                {
+                    var cell = snapshot.GetCell(left + x, top + row * 4 + y);
+                    if (row != visibleRow)
+                    {
+                        if (!Nullable.Equals<Hex1bColor>(cell.Background, Hex1bColor.Black)
+                            || (cell.Character != " " && !Nullable.Equals<Hex1bColor>(cell.Foreground, Hex1bColor.Black)))
+                        {
+                            return false;
+                        }
+                        continue;
+                    }
+
+                    var foreground = y == 0 || x == 0 ? highlight : x == 9 ? shadow : face;
+                    var background = y == 2 || x == 9 ? shadow : x == 0 ? highlight : face;
+                    if (y == 1 && x is >= 1 and <= 7)
+                    {
+                        foreground = ink;
+                        background = face;
+                    }
+                    if (cell.Character != characters[y][x].ToString()
+                        || !Nullable.Equals<Hex1bColor>(cell.Foreground, foreground)
+                        || !Nullable.Equals<Hex1bColor>(cell.Background, background))
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
 
     private static bool LettersMatch(Hex1bTerminalSnapshot snapshot, Dictionary<char, (string Marker, Hex1bColor? Background)> usedLetters)
     {
@@ -247,7 +360,7 @@ public class GameScreenTests
         return true;
     }
 
-    private static bool LetterRowIsVisible(Hex1bTerminalSnapshot snapshot, string word)
+    private static bool LetterRowIsVisible(Hex1bTerminalSnapshot snapshot, string word, int row = 0)
     {
         if (snapshot.ContainsText("TermSleuth") || snapshot.ContainsText("A-Z: type")
             || snapshot.ContainsText("PgUp/PgDn"))
@@ -263,7 +376,7 @@ public class GameScreenTests
                 {
                     var expected = x == 2 && y == 1 ? word[column].ToString() : " ";
                     var left = (snapshot.Width - 52) / 2 + 11 + column * 6;
-                    var top = (snapshot.Height - 28) / 2;
+                    var top = (snapshot.Height - 28) / 2 + row * 4;
                     if (snapshot.GetCell(left + x, top + y).Character != expected)
                     {
                         return false;
