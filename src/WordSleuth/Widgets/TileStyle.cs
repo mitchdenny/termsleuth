@@ -21,7 +21,7 @@ internal static class TileStyle
             LetterFeedback.Correct => Hex1bColor.FromRgb(83, 141, 78),
             LetterFeedback.Present => Hex1bColor.FromRgb(181, 159, 59),
             LetterFeedback.Absent => Hex1bColor.FromRgb(58, 58, 60),
-            _ => pendingBackground ?? Hex1bColor.Default
+            _ => pendingBackground ?? Hex1bColor.Black
         };
 
         return context.EffectPanel(child, surface =>
@@ -32,6 +32,7 @@ internal static class TileStyle
                 {
                     surface[x, y] = surface[x, y] with
                     {
+                        Character = string.IsNullOrEmpty(surface[x, y].Character) ? " " : surface[x, y].Character,
                         Foreground = Hex1bColor.White,
                         Background = background
                     };

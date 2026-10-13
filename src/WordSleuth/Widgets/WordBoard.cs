@@ -5,15 +5,17 @@ namespace WordSleuth;
 
 public static class WordBoard
 {
+    public const int Height = GameState.MaxGuesses * WordRow.Height;
+
     public static Hex1bWidget Build(WidgetContext<VStackWidget> context, IReadOnlyList<Guess> guesses,
-        string currentGuess) =>
+        string currentGuess, bool isFinished) =>
         context.VStack(board =>
             Enumerable.Range(0, GameState.MaxGuesses).Select(row =>
             {
                 var submitted = row < guesses.Count ? guesses[row] : null;
                 var word = submitted?.Word ?? (row == guesses.Count ? currentGuess : "");
-                return WordRow.Build(board, word, submitted?.Feedback);
+                return WordRow.Build(board, word, submitted?.Feedback, !isFinished && row == guesses.Count);
             }).ToArray())
-            .FixedWidth(GameState.WordLength * LetterTile.Width)
-            .FixedHeight(GameState.MaxGuesses * LetterTile.Height);
+            .FixedWidth(WordRow.Width)
+            .FixedHeight(Height);
 }

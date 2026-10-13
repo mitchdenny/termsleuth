@@ -4,16 +4,23 @@ using Hex1b.Widgets;
 
 namespace WordSleuth;
 
-public sealed class GameScreen(GameState game)
+public sealed class GameScreen(GameState game, TimeProvider? timeProvider = null)
 {
-    public Hex1bWidget Build(RootContext context) => context.Align(Alignment.Center, context.VStack(v =>
-    [
-        v.Align(Alignment.Center, WordBoard.Build(v, game.Guesses, game.CurrentGuess))
-            .FixedHeight(GameState.MaxGuesses * LetterTile.Height),
-        AlphabetGrid.Build(v, game.UsedLetters),
-        GuessStatus.Build(v, game.Guesses.Count, game.CurrentGuess, game.Message)
-    ]).FixedWidth(52).FixedHeight(GameState.MaxGuesses * LetterTile.Height + 4))
-        .Fill().InputBindings(bindings =>
+    private const int ContentWidth = 52;
+    private const int ContentHeight = WordBoard.Height + 4;
+    private readonly GameBackground background = new(timeProvider);
+
+    public Hex1bWidget Build(RootContext context) => context.ZStack(z =>
+        [
+            background.Build(z, ContentWidth, ContentHeight),
+            z.Align(Alignment.Center, z.VStack(v =>
+            [
+                v.Align(Alignment.Center, WordBoard.Build(v, game.Guesses, game.CurrentGuess, game.IsFinished))
+                    .FixedHeight(WordBoard.Height),
+                AlphabetGrid.Build(v, game.UsedLetters),
+                GuessStatus.Build(v, game.Guesses.Count, game.CurrentGuess, game.Message)
+            ]).FixedWidth(ContentWidth).FixedHeight(ContentHeight)).Fill()
+        ]).Fill().InputBindings(bindings =>
     {
         foreach (var letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
         {
