@@ -31,8 +31,9 @@ Green `=` tiles are correct, yellow `~` tiles are in the wrong position,
 and gray `-` tiles are absent. FIGlet letters and title markers stay white over
 the colored tile backgrounds. Duplicate letters are scored only as many times
 as they occur in the answer. Ctrl+R starts a new game; Ctrl+C quits.
-Used letters appear alphabetically below the grid after submission, colored
-by their best result so far. Starting a new game clears the list.
+All A-Z letters appear alphabetically below the grid. Unused letters have blue
+backgrounds and `.` markers; submitted letters use their best result so far.
+Starting a new game resets all letters to unused.
 Page Up / Page Down scroll the board in shorter terminals. Use at least 70
 columns; the input row and status remain below the scrollable board.
 

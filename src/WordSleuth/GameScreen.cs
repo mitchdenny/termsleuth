@@ -27,7 +27,7 @@ public sealed class GameScreen(GameState game)
                 bindings.Key(Hex1bKey.PageDown).Global().Triggers(ScrollPanelWidget.PageDownAction);
             })
             .FillHeight(),
-        BuildUsedLetters(v),
+        BuildLetters(v),
         v.Text($"Guess {Math.Min(game.Guesses.Count + 1, GameState.MaxGuesses)}/{GameState.MaxGuesses}: [{game.CurrentGuess.PadRight(GameState.WordLength, '_')}]"),
         v.Text(game.Message),
         v.Text("A-Z: type | Backspace: erase | Enter: submit"),
@@ -68,14 +68,19 @@ public sealed class GameScreen(GameState game)
             .ToArray()).FixedHeight(RowHeight);
     }
 
-    private Hex1bWidget BuildUsedLetters(WidgetContext<VStackWidget> context)
+    private Hex1bWidget BuildLetters(WidgetContext<VStackWidget> context)
     {
-        var letters = game.UsedLetters.OrderBy(letter => letter.Key).ToArray();
         return context.VStack(v =>
         [
-            v.Text(letters.Length == 0 ? "Used letters: none yet" : "Used letters"),
-            .. letters.Chunk(13).Select(chunk => v.HStack(h => chunk
-                .Select(letter => ColorTile(h, h.Text($" {letter.Key}{FeedbackMarker(letter.Value)} ").FixedWidth(4), letter.Value))
+            v.Text("Letters (blue: unused)"),
+            .. "ABCDEFGHIJKLMNOPQRSTUVWXYZ".Chunk(13).Select(chunk => v.HStack(h => chunk
+                .Select(letter =>
+                {
+                    LetterFeedback? feedback = game.UsedLetters.TryGetValue(letter, out var result) ? result : null;
+                    var marker = feedback.HasValue ? FeedbackMarker(feedback.Value) : ".";
+                    return ColorTile(h, h.Text($" {letter}{marker} ").FixedWidth(4), feedback,
+                        Hex1bColor.FromRgb(45, 70, 95));
+                })
                 .ToArray()).FixedHeight(1))
         ]);
     }
@@ -87,7 +92,8 @@ public sealed class GameScreen(GameState game)
         _ => "-"
     };
 
-    private static Hex1bWidget ColorTile<T>(WidgetContext<T> context, Hex1bWidget child, LetterFeedback? feedback)
+    private static Hex1bWidget ColorTile<T>(WidgetContext<T> context, Hex1bWidget child, LetterFeedback? feedback,
+        Hex1bColor? pendingBackground = null)
         where T : Hex1bWidget
     {
         var background = feedback switch
@@ -95,7 +101,7 @@ public sealed class GameScreen(GameState game)
             LetterFeedback.Correct => Hex1bColor.FromRgb(83, 141, 78),
             LetterFeedback.Present => Hex1bColor.FromRgb(181, 159, 59),
             LetterFeedback.Absent => Hex1bColor.FromRgb(58, 58, 60),
-            _ => Hex1bColor.Default
+            _ => pendingBackground ?? Hex1bColor.Default
         };
 
         return context.EffectPanel(child, surface =>

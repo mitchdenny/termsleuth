@@ -78,15 +78,22 @@ public class GameScreenTests
         try
         {
             await new Hex1bTerminalInputSequenceBuilder()
-                .WaitUntil(s => s.ContainsText("TermSleuth"), TimeSpan.FromSeconds(5))
+                .WaitUntil(s => s.ContainsText("TermSleuth") && LettersMatch(s, []), TimeSpan.FromSeconds(5))
                 .Type("alley")
-                .WaitUntil(s => FigletRowIsVisible(s, "ALLEY") && TileColorsMatch(s, 0, pending), TimeSpan.FromSeconds(5))
+                .WaitUntil(s => FigletRowIsVisible(s, "ALLEY") && TileColorsMatch(s, 0, pending)
+                    && LettersMatch(s, []), TimeSpan.FromSeconds(5))
                 .Enter()
                 .WaitUntil(s => s.ContainsText("5 guesses left.") && FigletRowIsVisible(s, "ALLEY")
                     && TileColorsMatch(s, 0, scored) && TileColorsMatch(s, 1, pending)
-                    && UsedLettersMatch(s, [scored[0], scored[3], scored[1], scored[4]]), TimeSpan.FromSeconds(5))
+                    && LettersMatch(s, new Dictionary<char, (string, Hex1bColor?)>
+                    {
+                        ['A'] = ("=", scored[0]),
+                        ['E'] = ("~", scored[3]),
+                        ['L'] = ("~", scored[1]),
+                        ['Y'] = ("-", scored[4])
+                    }), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.R, Hex1bModifiers.Control)
-                .WaitUntil(s => s.ContainsText("Find the five-letter") && s.ContainsText("Used letters: none yet")
+                .WaitUntil(s => s.ContainsText("Find the five-letter") && LettersMatch(s, [])
                     && TileColorsMatch(s, 0, pending), TimeSpan.FromSeconds(5))
                 .Key(Hex1bKey.C, Hex1bModifiers.Control)
                 .Build()
@@ -135,23 +142,30 @@ public class GameScreenTests
         }
     }
 
-    private static bool UsedLettersMatch(Hex1bTerminalSnapshot snapshot, Hex1bColor?[] backgrounds)
+    private static bool LettersMatch(Hex1bTerminalSnapshot snapshot, Dictionary<char, (string Marker, Hex1bColor? Background)> usedLetters)
     {
-        const string expected = " A=  E~  L~  Y- ";
-        var y = snapshot.Height - 5;
-        if (!snapshot.ContainsText("Used letters"))
+        if (!snapshot.ContainsText("Letters (blue: unused)"))
         {
             return false;
         }
 
-        for (var x = 0; x < expected.Length; x++)
+        for (var index = 0; index < 26; index++)
         {
-            var cell = snapshot.GetCell(x, y);
-            if (cell.Character != expected[x].ToString()
-                || !Nullable.Equals<Hex1bColor>(cell.Foreground, Hex1bColor.White)
-                || !Nullable.Equals(cell.Background, backgrounds[x / 4]))
+            var letter = (char)('A' + index);
+            var (marker, background) = usedLetters.TryGetValue(letter, out var result)
+                ? result
+                : (".", Hex1bColor.FromRgb(45, 70, 95));
+            var expected = $" {letter}{marker} ";
+            var y = snapshot.Height - 6 + index / 13;
+            for (var offset = 0; offset < 4; offset++)
             {
-                return false;
+                var cell = snapshot.GetCell(index % 13 * 4 + offset, y);
+                if (cell.Character != expected[offset].ToString()
+                    || !Nullable.Equals<Hex1bColor>(cell.Foreground, Hex1bColor.White)
+                    || !Nullable.Equals(cell.Background, background))
+                {
+                    return false;
+                }
             }
         }
 
