@@ -273,7 +273,7 @@ public class GameScreenTests
         var highlight = Hex1bColor.FromRgb(242, 224, 189);
         var shadow = Hex1bColor.FromRgb(130, 111, 80);
         var ink = Hex1bColor.FromRgb(56, 46, 32);
-        string[] characters = ["▀▀▀▀▀▀▀▀▀▀", "▀ENTER ↵▀▀", "▀▀▀▀▀▀▀▀▀▀"];
+        string[] characters = ["▀▀▀▀▀▀▀▀▀▀", "▀▀ENTER ↵▀", "▀▀▀▀▀▀▀▀▀▀"];
         var left = (snapshot.Width - 52) / 2 + 41;
         var top = (snapshot.Height - 28) / 2;
         for (var row = 0; row < 6; row++)
@@ -295,7 +295,7 @@ public class GameScreenTests
 
                     var foreground = y == 0 || x == 0 ? highlight : x == 9 ? shadow : face;
                     var background = y == 2 || x == 9 ? shadow : x == 0 ? highlight : face;
-                    if (y == 1 && x is >= 1 and <= 7)
+                    if (y == 1 && x is >= 2 and <= 8)
                     {
                         foreground = ink;
                         background = face;
